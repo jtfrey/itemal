@@ -1,0 +1,867 @@
+aggregateResults:
+    answerFrequencyBreakdown:
+        A: {averageDifficulty: 0.5599999999999999, frequencyPerQuestion: 0.25, frequencyPerResponse: 0.315}
+        B: {averageDifficulty: 0.5399999999999999, frequencyPerQuestion: 0.25, frequencyPerResponse: 0.205}
+        C: {averageDifficulty: 0.52, frequencyPerQuestion: 0.25, frequencyPerResponse: 0.265}
+        D: {averageDifficulty: 0.5, frequencyPerQuestion: 0.25, frequencyPerResponse: 0.215}
+    biserialCorrelation: 0.8458371754391862
+    distributionByPassingStatus:
+    -   numberOfItems: 0
+        range: [0, 19]
+    -   numberOfItems: 0
+        range: [20, 39]
+    -   numberOfItems: 10
+        range: [40, 59]
+    -   numberOfItems: 10
+        range: [60, 79]
+    -   numberOfItems: 0
+        range: [80, 100]
+    distributionByScore:
+    -   numberOfItems: 0
+        range: [-Infinity, 0.1]
+    -   numberOfItems: 1
+        range: [0.11, 0.3]
+    -   numberOfItems: 0
+        range: [0.31, 0.5]
+    -   numberOfItems: 3
+        range: [0.51, 0.7]
+    -   numberOfItems: 8
+        range: [0.71, 0.9]
+    -   numberOfItems: 8
+        range: [0.91, +Infinity]
+    kuderRichardson20Reliability: 0.9579732914375491
+    meanQuestionDifficulty: 0.53
+    numberOfQuestions: 20
+    numberOfStudents: 10
+    standardDeviation: 7.321202087089251
+    standardErrorOfMeasurementKR20: 1.500876936643165
+    testMean: 10.6
+    variance: 53.6
+course: PSY101 10
+examDate: '2021-09-13'
+instructor: S. Freud
+processedTimestamp: '2022-03-09T23:00:58'
+results:
+-   answerKey: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    responseForm: forward
+    summaries:
+    -   T: 0.6761043534917879
+        biserialCorrelation: 0.3043880607041116
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 11.714285714285714
+                perGroupResponseCounts: [4, 2, 1]
+                proportionChoosing: 0.7
+                responseTotal: 7
+            B:
+                answerIndex: 2
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 12.0
+                perGroupResponseCounts: [0, 1, 1]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 1, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 2
+        pointBiserialCorrelation: 0.23248908083582998
+        questionNumber: 1
+    -   T: 1.5691922379410663
+        biserialCorrelation: 0.6145050203100553
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 13.5
+                perGroupResponseCounts: [3, 2, 1]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 8.333333333333334
+                perGroupResponseCounts: [1, 1, 1]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 1, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 3
+        pointBiserialCorrelation: 0.48513346371069915
+        questionNumber: 2
+    -   T: 1.5691922379410663
+        biserialCorrelation: 0.6145050203100553
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 8.0
+                perGroupResponseCounts: [0, 2, 1]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 13.5
+                perGroupResponseCounts: [3, 2, 1]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            D:
+                answerIndex: 4
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 4
+        pointBiserialCorrelation: 0.48513346371069915
+        questionNumber: 3
+    -   T: 1.5691922379410663
+        biserialCorrelation: 0.6145050203100553
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 8.0
+                perGroupResponseCounts: [0, 2, 1]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 13.5
+                perGroupResponseCounts: [3, 2, 1]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 5
+        pointBiserialCorrelation: 0.48513346371069915
+        questionNumber: 4
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            B:
+                answerIndex: 2
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 4.5
+                perGroupResponseCounts: [1, 1, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 2
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 5
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 4.5
+                perGroupResponseCounts: [1, 1, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 3
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 6
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 4.0
+                perGroupResponseCounts: [0, 3, 0]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            D:
+                answerIndex: 4
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 4
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 7
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 4.0
+                perGroupResponseCounts: [0, 3, 0]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 5
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 8
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            B:
+                answerIndex: 2
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 4.5
+                perGroupResponseCounts: [1, 1, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 2
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 9
+    -   T: 4.047767105272628
+        biserialCorrelation: 1.038301586041128
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 15.5
+                perGroupResponseCounts: [3, 1, 2]
+                proportionChoosing: 0.6
+                responseTotal: 6
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 4.5
+                perGroupResponseCounts: [1, 1, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 3
+        pointBiserialCorrelation: 0.8197082662698021
+        questionNumber: 10
+    -   T: 4.045199174779455
+        biserialCorrelation: 1.0271438650702231
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 5.5
+                perGroupResponseCounts: [1, 3, 0]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 16.6
+                perGroupResponseCounts: [2, 1, 2]
+                proportionChoosing: 0.5
+                responseTotal: 5
+            D:
+                answerIndex: 4
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 4
+        pointBiserialCorrelation: 0.8195375470622297
+        questionNumber: 11
+    -   T: 4.045199174779455
+        biserialCorrelation: 1.0271438650702231
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 5.5
+                perGroupResponseCounts: [1, 3, 0]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 1.0
+                perGroupResponseCounts: [1, 0, 0]
+                proportionChoosing: 0.1
+                responseTotal: 1
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 16.6
+                perGroupResponseCounts: [2, 1, 2]
+                proportionChoosing: 0.5
+                responseTotal: 5
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 5
+        pointBiserialCorrelation: 0.8195375470622297
+        questionNumber: 12
+    -   T: 2.853870759731949
+        biserialCorrelation: 0.8901913497275266
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 15.8
+                perGroupResponseCounts: [2, 2, 1]
+                proportionChoosing: 0.5
+                responseTotal: 5
+            B:
+                answerIndex: 2
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 7.666666666666667
+                perGroupResponseCounts: [2, 0, 1]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 2
+        pointBiserialCorrelation: 0.7102658741205989
+        questionNumber: 13
+    -   T: 2.853870759731949
+        biserialCorrelation: 0.8901913497275266
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 15.8
+                perGroupResponseCounts: [2, 2, 1]
+                proportionChoosing: 0.5
+                responseTotal: 5
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 7.666666666666667
+                perGroupResponseCounts: [2, 0, 1]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 3
+        pointBiserialCorrelation: 0.7102658741205989
+        questionNumber: 14
+    -   T: 2.853870759731949
+        biserialCorrelation: 0.8901913497275266
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 4.666666666666667
+                perGroupResponseCounts: [1, 2, 0]
+                proportionChoosing: 0.3
+                responseTotal: 3
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 6.5
+                perGroupResponseCounts: [1, 0, 1]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 15.8
+                perGroupResponseCounts: [2, 2, 1]
+                proportionChoosing: 0.5
+                responseTotal: 5
+            D:
+                answerIndex: 4
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 4
+        pointBiserialCorrelation: 0.7102658741205989
+        questionNumber: 15
+    -   T: 2.133704105172719
+        biserialCorrelation: 0.7628338183159308
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 7.25
+                perGroupResponseCounts: [2, 2, 0]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 6.5
+                perGroupResponseCounts: [1, 0, 1]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 16.0
+                perGroupResponseCounts: [1, 2, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 5
+        pointBiserialCorrelation: 0.6022346446063852
+        questionNumber: 16
+    -   T: 2.133704105172719
+        biserialCorrelation: 0.7628338183159308
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 16.0
+                perGroupResponseCounts: [1, 2, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 9.5
+                perGroupResponseCounts: [3, 0, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 2
+        pointBiserialCorrelation: 0.6022346446063852
+        questionNumber: 17
+    -   T: 2.133704105172719
+        biserialCorrelation: 0.7628338183159308
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 16.0
+                perGroupResponseCounts: [1, 2, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 9.5
+                perGroupResponseCounts: [3, 0, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 2.0
+                perGroupResponseCounts: [0, 2, 0]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 3
+        pointBiserialCorrelation: 0.6022346446063852
+        questionNumber: 18
+    -   T: 2.133704105172719
+        biserialCorrelation: 0.7628338183159308
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 7.25
+                perGroupResponseCounts: [2, 2, 0]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 6.5
+                perGroupResponseCounts: [1, 0, 1]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            C:
+                answerIndex: 3
+                isQuestionable: false
+                meanScore: 16.0
+                perGroupResponseCounts: [1, 2, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            D:
+                answerIndex: 4
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 4
+        pointBiserialCorrelation: 0.6022346446063852
+        questionNumber: 19
+    -   T: 2.133704105172719
+        biserialCorrelation: 0.7628338183159308
+        byAnswer:
+            A:
+                answerIndex: 1
+                isQuestionable: false
+                meanScore: 7.25
+                perGroupResponseCounts: [2, 2, 0]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            B:
+                answerIndex: 2
+                isQuestionable: false
+                meanScore: 6.5
+                perGroupResponseCounts: [1, 0, 1]
+                proportionChoosing: 0.2
+                responseTotal: 2
+            C:
+                answerIndex: 3
+                isQuestionable: true
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+            D:
+                answerIndex: 4
+                isQuestionable: false
+                meanScore: 16.0
+                perGroupResponseCounts: [1, 2, 1]
+                proportionChoosing: 0.4
+                responseTotal: 4
+            OMIT:
+                answerIndex: 0
+                isQuestionable: false
+                meanScore: 0.0
+                perGroupResponseCounts: [0, 0, 0]
+                proportionChoosing: 0.0
+                responseTotal: 0
+        correctAnswer: 5
+        pointBiserialCorrelation: 0.6022346446063852
+        questionNumber: 20

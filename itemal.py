@@ -24,7 +24,17 @@ from datetime import datetime, date, time
 import argparse
 import re
 import math
-import copy
+import json
+import functools
+
+#
+# File formats recognized by the program:
+#
+formatsRecognized = {
+        'fortran':      lambda statsData: FortranIOHelper(statsData),
+        'json':         lambda statsData: JSONIOHelper(statsData),
+        'json+pretty':  lambda statsData: JSONIOHelper(statsData, shouldIndentOutput=True)
+    }
 
 #
 # To determine "is equal" for floating-point types, we need a function that calculates
@@ -43,21 +53,33 @@ except:
 
 class SparseStorage(object):
     """The SparseStorage class implements a sparse multi-dimensional array.  The array starts as an empty list.  As data are added, the lists are filled-in to the necessary depth in each accessed dimension.  When data are read, any set of indices not leading to a set value produce a default return value, not an error.  This makes the multi-dimensional array essentially unbounded.  While the Fortran ITEMAL code is written to limit to 5 groups and 160 questions, the statistical data class uses SparseStorage and is thus not bound to any specific maximum dimensionality."""
+    
+    _allocIdx = 0
+    
+    @classmethod
+    def allocIdx(cls):
+        cls._allocIdx += 1
+        return cls._allocIdx
 
     def __init__(self, rank, fillInValue=0):
         if rank < 1:
             raise ValueError('Invalid SparseStorage rank {:d}'.format(rank))
         self._storage = []
         self._rank = rank
+        self._maxDimension = []
+        self._allocIdx = SparseStorage.allocIdx()
         self._fillInValue = fillInValue
     
-    def __getitem__(self, index):
-        """Allow the convenience of bracket notation for getting the value at an index.  The index must be an list/tuple of the same dimension as the receiver's rank."""
-        return self.valueAtIndex(index)
+    def __getitem__(self, key):
+        """Allow the convenience of bracket notation for getting the value at a key.  The key must be an list/tuple of the same dimension as the receiver's rank."""
+        return self.valueAtIndex(key)
     
-    def __setitem__(self, index, newValue):
-        """Allow the convenience of bracket notation for setting the value at an index.  The index must be an list/tuple of the same dimension as the receiver's rank."""
-        return self.setValueAtIndex(index, newValue)
+    def __setitem__(self, key, newValue):
+        """Allow the convenience of bracket notation for setting the value at a key.  The key must be an list/tuple of the same dimension as the receiver's rank."""
+        return self.setValueAtIndex(key, newValue)
+    
+    def maxDimension(self):
+        return self._maxDimension
     
     def fillInValue(self):
         """Returns the fill-in value associated with unset regions of the receiver."""
@@ -70,44 +92,58 @@ class SparseStorage(object):
     def clearAllValues(self):
         """Reset the receiver to be completely empty of all set values."""
         self._storage = []
+        self._maxDimension = []
     
-    def valueAtIndex(self, index):
-        """Return the value at the given index in the receiver.  The index must be an list/tuple of the same dimension as the receiver's rank (an IndexError exception will be thrown otherwise).  If the index is not set in the receiver, its fill-in value is returned."""
-        if len(index) != self._rank:
-            raise IndexError('Indices of rank {:d} where {:d} expected'.format(len(index), self._rank))
+    def valueAtIndex(self, key):
+        """Return the value at the given key in the receiver.  The key must be an list/tuple of the same dimension as the receiver's rank (an IndexError exception will be thrown otherwise).  If the key is not set in the receiver, its fill-in value is returned."""
+        if len(key) != self._rank:
+            raise IndexError('Indices of rank {:d} where {:d} expected'.format(len(key), self._rank))
         outValue = self._fillInValue
         focus = self._storage
         try:
-            for idx in index:
+            for idx in key:
                 focus = focus[idx]
             outValue = focus
         except:
             pass
         return outValue
     
-    def setValueAtIndex(self, index, newValue=0):
-        """Sets the value at the given index in the receiver to newValue.  The index must be an list/tuple of the same dimension as the receiver's rank (an IndexError exception will be thrown otherwise).  If the index is not set in the receiver, any intervening regions between the end of a list and the desired index will be filled with empty lists or the fill-in value (in the case of the final dimension)."""
-        if len(index) != self._rank:
-            raise IndexError('Indices of rank {:d} where {:d} expected'.format(len(index), self._rank))
+    def setValueAtIndex(self, key, newValue=0):
+        """Sets the value at the given key in the receiver to newValue.  The key must be an list/tuple of the same dimension as the receiver's rank (an IndexError exception will be thrown otherwise).  If the key is not set in the receiver, any intervening regions between the end of a list and the desired key will be filled with empty lists or the fill-in value (in the case of the final dimension)."""
+        if len(key) != self._rank:
+            raise IndexError('Indices of rank {:d} where {:d} expected'.format(len(key), self._rank))
+        dimIdx = 0
         focus = self._storage
-        for idx in index[:-1]:
+        for idx in key[:-1]:
+            # Add a dimension?
+            if dimIdx >= len(self._maxDimension):
+                self._maxDimension.append(0)
             if idx >= len(focus):
-                for dummy in range(idx - len(focus) + 1):
+                addEmptyLists = idx - len(focus) + 1
+                if idx + 1 > self._maxDimension[dimIdx]:
+                    self._maxDimension[dimIdx] = idx + 1
+                for dummy in range(addEmptyLists):
                     focus.append([])
             focus = focus[idx]
-        idx = index[-1]
+            dimIdx += 1
+        idx = key[-1]
         if idx >= len(focus):
-            for dummy in range(idx - len(focus) + 1):
+            if dimIdx >= len(self._maxDimension):
+                self._maxDimension.append(0)
+            addEmptyItems = idx - len(focus) + 1
+            if idx + 1 > self._maxDimension[dimIdx]:
+                self._maxDimension[dimIdx] = idx + 1
+            for dummy in range(addEmptyItems):
                 focus.append(self._fillInValue)
         focus[idx] = newValue
     
-    def addValueAtIndex(self, index, deltaValue):
-        """Convenience method that fetches the value at the given index, adds deltaValue to it, and sets the value at that index to the sum."""
-        self.setValueAtIndex(index, self.valueAtIndex(index) + deltaValue)
+    def addValueAtIndex(self, key, deltaValue):
+        """Convenience method that fetches the value at the given key, adds deltaValue to it, and sets the value at that key to the sum."""
+        self.setValueAtIndex(key, self.valueAtIndex(key) + deltaValue)
     
-    def scaleValueAtIndex(self, index, multiplier):
-        """Convenience method that fetches the value at the given index, multiplies by multiplier, and sets the value at that index to the product."""
-        self.setValueAtIndex(index, self.valueAtIndex(index) * multiplier)
+    def scaleValueAtIndex(self, key, multiplier):
+        """Convenience method that fetches the value at the given key, multiplies by multiplier, and sets the value at that key to the product."""
+        self.setValueAtIndex(key, self.valueAtIndex(key) * multiplier)
 
 
 def stringToIntWithDefault(s, default=0):
@@ -161,6 +197,9 @@ Index -1 in each top-level list represents the last-added item.
     def groupCount(self):
         """Returns the number of groups currently defined in the receiver."""
         return len(self.groupIds)
+    
+    def totalRecordCount(self):
+        return functools.reduce(lambda sumCount, groupScores: sumCount + len(groupScores), self.scores, 0)
     
     def groupIndexForId(self, groupId):
         """Locate the given groupId and return the index occupied by it in the receiver's scores/answers/groupIds lists."""
@@ -249,6 +288,10 @@ Index -1 in each top-level list represents the last-added item.
 
 class BaseIOHelper(object):
     """The BaseIOHelper forms the abstract subclass for all i/o helpers (Fortran, maybe dict coming from a YAML or JSON file in the future...)."""
+    
+    # The mapping of answers and questionability badge by index:
+    answerSymbolByIndex = '$ ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    questionableBadgeByIndex = '$ ?'
 
     def __init__(self, statData):
         self.statData = statData
@@ -273,7 +316,7 @@ Returns a StudentData object containing the answers read."""
         """Process the test statistics."""
         raise NotImplementedError()
     
-    def printResults(self, inputFPtr, outputFPtr):
+    def printResults(self, inputFPtr, outputFPtr, studentData):
         """Write a statistical summary of the questions and answers to outputFPtr.  The inputFPtr is checked for an additional answer section or test.
         
 Returns True if additional answers or another test are present in inputFPtr."""
@@ -307,13 +350,17 @@ class FortranIOHelper(BaseIOHelper):
                 self.statData.COURS = values[4:14]                              # Course identifier
                 self.statData.INST = values[14:24]                              # Instructor identifier
                 self.statData.RAW_DATE = values[29:35]                          # Raw date MMDDYY with implied century
-                self.statData.ITN = stringToIntWithDefault(values[35:41])       # Number of exam responses
-                self.statData.ITEMN = stringToIntWithDefault(values[41:46])     # Number of questions on exam
+                
+                ITN = stringToIntWithDefault(values[35:41])                     # Number of exam responses
+                ITEMN = stringToIntWithDefault(values[41:46])                   # Number of questions on exam
+                self.statData.setDimensions(ITN, ITEMN)
+                
                 self.statData.KODE = stringToIntWithDefault(values[46:51])      # 0 = test summary only, 1=question + test summary
                 self.statData.ICHO = stringToIntWithDefault(values[51:56])      # Maximum number of responses per question
                 self.statData.IDIG = stringToIntWithDefault(values[56:61])      # 1 = forward order (A, B, ...), 2 = reverse order (E, D, ...)
                 self.statData.IUNT = stringToIntWithDefault(values[61:62])      # Fortran Unit from which to read test data (not useful...)
                 self.statData.NCOPY = stringToIntWithDefault(values[62:])       # Number of copies (0, 1, 2)
+                
             except Exception as E:
                 # All done:
                 return False
@@ -460,47 +507,6 @@ class FortranIOHelper(BaseIOHelper):
                 else:
                     outData.setScore(score)
                     outData.appendAnswers(answers)
-            
-                
-                
-#                 lastIndex = 0
-#                 fieldIndex = 0
-#                 didStartNewGroup = False
-#                 didNotCreateNewGroup = False
-#                 # Parse the line according to the format:
-#                 for field in self.FMT:
-#                     # Process the next nItems fields of specified width:
-#                     if field['type'] == 'I':  
-#                         nFields = field['count']
-#                         fieldWidth = field['width']
-#                         while nFields > 0:
-#                             v = int(values[lastIndex:lastIndex + fieldWidth])
-#                             if fieldIndex == 0:
-#                                 # This is the score; if it hasn't been set yet, do so.  Otherwise, make sure it matches the previous line's score:
-#                                 if outData.score() is None:
-#                                     if v == -1:
-#                                         # Signals a new group:
-#                                         if outData.groupCount() < 5:
-#                                             outData.startGroup()
-#                                         else:
-#                                             didNotCreateNewGroup = True
-#                                         didStartNewGroup = True
-#                                         break
-#                                     outData.setScore(v)
-#                                 elif outData.score() != v:
-#                                     raise ValueError('Mismatched score for multi-line student data at character {:d}:  {:s}'.format(lastIndex + 1, values))
-#                             else:
-#                                 outData.appendAnswer(v)
-#                             lastIndex = lastIndex + fieldWidth
-#                             fieldIndex = fieldIndex + 1
-#                             nFields = nFields - 1
-#                         if didStartNewGroup:
-#                             break
-#                     else:
-#                         lastIndex = field['width'] - 1
-#                 
-#                 if didNotCreateNewGroup:
-#                     break
         
             if not outData.isAnswerListComplete():
                 raise ValueError('Incomplete answer read from input file')
@@ -523,13 +529,13 @@ class FortranIOHelper(BaseIOHelper):
                     #   270 FORMAT (1H0,24HA RESPONSE FOR QUESTION ,I2,1X,10HFOR GROUP ,I1,1X,
                     #      116HREAD AS NEGATIVE)
                     outputFPtr.write(
-                            'A RESPONSE FOR QUESTION {:2d} FOR GROUP {:1d} READ AS NEGATIVE'.format(i, outData.currentGroupId()))
+                            'A RESPONSE FOR QUESTION {:2d} FOR GROUP {:1d} READ AS NEGATIVE'.format(i + 1, outData.currentGroupId()))
                     continue
                 elif outData.answers[-1][-1][i] > self.statData.ICHO:
                     #   290 FORMAT (1H0,24HA RESPONSE FOR QUESTION ,I2,1X,10HFOR GROUP ,I1,1X,
                     #      121HREAD AS GREATER THAN ,I1)
                     outputFPtr.write(
-                            'A RESPONSE FOR QUESTION {:2d} FOR GROUP {:1d} READ AS GREATER THAN {:1d}'.format(i, outData.currentGroupId(), self.statDate.ICHO))
+                            'A RESPONSE FOR QUESTION {:2d} FOR GROUP {:1d} READ AS GREATER THAN {:1d}'.format(i + 1, outData.currentGroupId(), self.statDate.ICHO))
                     continue
                 
                 j = outData.answers[-1][-1][i] + 1
@@ -561,9 +567,7 @@ class FortranIOHelper(BaseIOHelper):
         # ' ',15X,'ITEM NUMBER',I4,8X,'CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * ' /
         outputFPtr.write('                ITEM NUMBER{:4d}        CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * \n\n'.format(JUP))
 
-    def printResults(self, inputFPtr, outputFPtr):
-        ANS = '$ ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        DISTR = '$ ?'
+    def printResults(self, inputFPtr, outputFPtr, studentData):
         for copy in range(self.statData.NCOPY):
             L1 = 0
             L2 = 1
@@ -623,9 +627,9 @@ class FortranIOHelper(BaseIOHelper):
                     badge = ('*' if (KOR == j) else ' ')
                     tallies = [self.statData.ITAB[[i, j, L]] for L in range(1,6)]
                     outputFPtr.write('  {:s}{:1.1s} OR {:1d}    {:3d}    {:3d}    {:3d}    {:3d}    {:3d}     {:4d}        {:s}{:6.3f}      {:6.2f}        {:1.1s}\n'.format(
-                            badge, ANS[j], K,
+                            badge, self.answerSymbolByIndex[j], K,
                             tallies[0], tallies[1], tallies[2], tallies[3], tallies[4],
-                            self.statData.JTOT[[i,j]], badge, self.statData.PROP[[i,j]], self.statData.CMEAN[[i, j]], DISTR[IDIS])
+                            self.statData.JTOT[[i,j]], badge, self.statData.PROP[[i,j]], self.statData.CMEAN[[i, j]], self.questionableBadgeByIndex[IDIS])
                         )
                         
                 # 1H0,2X,5HTOTAL,5X,I3,4X,I3,4X,I3,4X,I3,4X,I3,5X,I4
@@ -647,16 +651,6 @@ class FortranIOHelper(BaseIOHelper):
                 if self.statData.KODE == 0:
                     # 1H ,///
                     outputFPtr.write(' \n\n\n\n')
-                else:
-                    JUNK = self.statData.IDI[[i]]
-                    KUNK = self.statData.IBI[[i]]
-                    if self.statData.IBI[[i]] > 1:
-                        if (KUNK + JUNK) < 10:
-                            MUNK = (KUNK + JUNK + 1) / 2
-                        else:
-                            MUNK = 5
-                    else:
-                        MUNK = 1
                 
         self.statData.NNXYZ += self.statData.ITEMN
         for i in range(1, self.statData.ITEMN + 1):
@@ -673,42 +667,27 @@ class FortranIOHelper(BaseIOHelper):
         values = nextNonEmptyLineInFile(inputFPtr)
         
         #(I4,2A10,5X,3I2,1X,I4,2X,I3,3(4X,I1), 1X,3X,I1 )
-        self.statData.KTC = stringToIntWithDefault(values[0:4])         # 4-digit arbitrary id
-        self.statData.COURS = values[4:14]                              # Course identifier
-        self.statData.INST = values[14:24]                              # Instructor identifier
-        self.statData.RAW_DATE = values[29:35]                          # Raw date MMDDYY with implied century
-        self.statData.ITN = stringToIntWithDefault(values[35:41])       # Number of exam responses
-        self.statData.ITEMN = stringToIntWithDefault(values[41:46])     # Number of questions on exam
-        self.statData.KODE = stringToIntWithDefault(values[46:51])      # 0 = test summary only, 1=question + test summary
-        self.statData.ICHO = stringToIntWithDefault(values[51:56])      # Maximum number of responses per question
-        self.statData.IDIG = stringToIntWithDefault(values[56:61])      # 1 = forward order (A, B, ...), 2 = reverse order (E, D, ...)
-        self.statData.NCOPY = stringToIntWithDefault(values[62:])       # Number of copies (0, 1, 2)
-        
-        if self.statData.ITEMN > 0:
+        ITEMN = stringToIntWithDefault(values[41:46])                   # Number of questions on exam
+        if ITEMN > 0:
             # Also signals another set of answers
+            self.statData.KTC = stringToIntWithDefault(values[0:4])         # 4-digit arbitrary id
+            self.statData.COURS = values[4:14]                              # Course identifier
+            self.statData.INST = values[14:24]                              # Instructor identifier
+            self.statData.RAW_DATE = values[29:35]                          # Raw date MMDDYY with implied century
+            ITN = stringToIntWithDefault(values[35:41])                     # Number of exam responses
+            self.statData.setDimensions(ITN, ITEMN)
+            self.statData.KODE = stringToIntWithDefault(values[46:51])      # 0 = test summary only, 1=question + test summary
+            self.statData.ICHO = stringToIntWithDefault(values[51:56])      # Maximum number of responses per question
+            self.statData.IDIG = stringToIntWithDefault(values[56:61])      # 1 = forward order (A, B, ...), 2 = reverse order (E, D, ...)
+            self.statData.NCOPY = stringToIntWithDefault(values[62:])       # Number of copies (0, 1, 2)
+            
             return True
         
-        self.statData.FMEDI = self.statData.SDI / self.statData.GITEMN
-        self.statData.FMEBIS = self.statData.SBIS / self.statData.GITEMN
-        self.statData.CORI = self.statData.FMEBIS**2
-        if isclose(self.statData.FVAR, 0.0):
-            REL = 0.0
-            SEMEAS = 0.0
-        else:
-            REL = (self.statData.GITEMN / (self.statData.GITEMN - 1.0)) * ((self.statData.FVAR - self.statData.VAR) / self.statData.FVAR)
-            SEMEAS = self.statData.SDEV * math.sqrt(1.0 - REL)
-        for KEY in range(1, self.statData.KCHO + 1):
-            self.statData.PCTKEY[[KEY]] = self.statData.CNTKEY[[KEY]] / self.statData.GITEMN
-            self.statData.PCTCHO[[KEY]] = self.statData.CNTCHO[[KEY]] / (self.statData.FITN * self.statData.GITEMN)
-            if isclose(self.statData.CNTKEY[[KEY]], 0.0):
-                self.statData.AVDIFF[[KEY]] = 0.0
-            else:
-                self.statData.AVDIFF[[KEY]] = self.statData.PROSUM[[KEY]] / self.statData.CNTKEY[[KEY]]
-        self.statData.ITITEM = int(self.statData.GITEMN)
-        if self.statData.MCOPY > 1:
-            self.statData.NCOPY = 3
-        if self.statData.NCOPY == 0:
-            self.statData.NCOPY = 1
+        # Parse the raw date from the input file into a Python Date object:
+        self.statData.DATE = datetime.strptime(self.statData.RAW_DATE, '%m%d%y')
+        
+        # Calculation aggregate statistics across all sections:
+        self.statData.calculateAggregateStats()
         
         for dummy in range(self.statData.NCOPY):
             # '1',50X,'ADDITIONAL TEST INFORMATION'//// 15X,'THE MEAN ITEM DIFFICULTY FOR THE ENTIRE TEST =',F7.3//15X,'THE MEAN ITEM SCORE - TOTAL SCORE BISERIAL CORRELATION =', F6.3
@@ -718,12 +697,12 @@ class FortranIOHelper(BaseIOHelper):
         
             # /15X,'KUDER-RICHARDSON 20 RELIABILITY =',F7.3//  15X,'TEST MEAN =',F7.2, '   VARIANCE =', F10.2,  '   STANDARD DEVIATION =',F7.2 /
             outputFPtr.write('\n               KUDER-RICHARDSON 20 RELIABILITY ={:7.3f}\n\n               TEST MEAN ={:7.2f}   VARIANCE ={:10.2f}   STANDARD DEVIATION ={:7.2f}\n\n'.format(
-                    REL, self.statData.FMEAN, self.statData.FVAR, self.statData.SDEV)
+                    self.statData.REL, self.statData.FMEAN, self.statData.FVAR, self.statData.SDEV)
                 )
         
             # 15X,'STANDARD ERROR OF MEASUREMENT (BASED ON KR-20) =',F7.2//  15X,'NUMBER OF STUDENTS =',I5,8X,'NUMBER OF ITEMS ON TEST =',I5////
             outputFPtr.write('               STANDARD ERROR OF MEASUREMENT (BASED ON KR-20) ={:7.2f}\n\n               NUMBER OF STUDENTS ={:5d}        NUMBER OF ITEMS ON TEST ={:5d}\n\n\n\n\n'.format(
-                    SEMEAS, self.statData.KTN, self.statData.ITITEM)
+                    self.statData.SEMEAS, self.statData.KTN, self.statData.ITITEM)
                 )
         
             # ' ',10X,'DISTRIBUTION OF THE TEST ITEMS',39X,'DISTRIBUTION OF THE TEST ITEMS'/ ' IN TERMS OF THE PERCENTAGE OF STUDENTS',' PASSING THEM', 14X,'IN TERMS OF ITEM SCORE - TOTAL SCORE BISERIAL CORRELATIONS'/// 6X,'PERCENT PASSING',11X,'NUMBER OF ITEMS',33X, 'CORRELATIONS', 4X,'NUMBER OF ITEMS'
@@ -764,7 +743,7 @@ class FortranIOHelper(BaseIOHelper):
             for k in range(1, self.statData.KCHO + 1):
                 # (43X,A1,9X,F5.3,8X,F5.3,9X,F5.3)
                 outputFPtr.write('                                           {:1.1s}         {:5.3f}        {:5.3f}         {:5.3f}\n'.format(
-                        ANS[k + 1], self.statData.PCTKEY[[k]], self.statData.PCTCHO[[k]], self.statData.AVDIFF[[k]])
+                        self.answerSymbolByIndex[k + 1], self.statData.PCTKEY[[k]], self.statData.PCTCHO[[k]], self.statData.AVDIFF[[k]])
                     )
         
             # //10X,'% KEYED= FREQUENCY OF A GIVEN KEY DIVIDED BY THE NUMBER OF ITEMS.'/ 10X,'% CHOSEN= FREQUENCY OF A GIVEN RESPONSE DIVIDED BY THE TOTAL NUMBER OF RESPONSES TO ALL ITEMS (EXCLUDING OMITS).'/ 10X,'AVG. DIFF.= TOTAL OF ALL DIFFICULTY VALUES FOR ITEMS WITH A GIVEN KEY DIVIDED BY THE NUMBER OF SUCH ITEMS.'
@@ -774,6 +753,356 @@ class FortranIOHelper(BaseIOHelper):
         
         return False
 
+
+class JSONIOHelper(BaseIOHelper):
+    """The JSONIOHelper is a concrete subclass of the BaseIOHelper.  All data is read from a JSON file."""
+    
+    def __init__(self, statData, shouldIndentOutput=False):
+        self._dataSet = None
+        self._questionSetIndex = None
+        self._messages = []
+        self._outputDoc = {}
+        self._shouldIndentOutput = shouldIndentOutput
+        super(JSONIOHelper, self).__init__(statData)
+    
+    def dataSet(self):
+        return self._dataSet
+    
+    def setDataSet(self, dataSet):
+        if self._dataSet is not None:
+            raise RuntimeError('Cannot overwrite existing read-in data set')
+        self._dataSet = dataSet
+    
+    def readInputFile(self, inputFPtr):
+        return json.load(inputFPtr)
+
+    def initializeOptionsFromDict(self, optionsDict):
+        if 'testSummaryOnly' in optionsDict:
+            self.statData.KODE = 0 if optionsDict['testSummaryOnly'] else 1
+        if 'isReverseOrder' in optionsDict:
+            self.statData.IDIG = 2 if optionsDict['isReverseOrder'] else 1
+        if 'numberOfCopies' in optionsDict:
+            ncopy = int(optionsDict['numberOfCopies'])
+            self.statData.NCOPY = 2 if (ncopy >= 2) else (0 if (ncopy <= 0) else ncopy)
+    
+    def initializeMetaDataFromDict(self, headerDict, isPrimary=False):
+        if isPrimary:
+            self.statData.KTC = headerDict.get('examId', 0)
+            if self.statData.KTC == 0:
+                return False
+        
+            self.statData.RAW_DATE = headerDict.get('date', date.today())
+            if isinstance(self.statData.RAW_DATE, str) or isinstance(self.statData.RAW_DATE, unicode):
+                try:
+                    self.statData.DATE = datetime.strptime(self.statData.RAW_DATE, '%m%d%y')
+                except:
+                    try:
+                        self.statData.DATE = datetime.strptime(self.statData.RAW_DATE, '%Y-%m-%d')
+                    except:
+                        try:
+                            pieces = self.statData.RAW_DATE.split('T')
+                            self.statData.DATE = datetime.strptime(pieces[0], '%Y-%m-%d')
+                        except:
+                            try:
+                                self.statData.DATE = datetime.strptime(self.statData.RAW_DATE, '%x')
+                            except:
+                                raise ValueError('Invalid test date supplied: {:s}'.format(self.statData.RAW_DATE))
+            else:
+                self.statData.DATE = self.statData.RAW_DATE
+                self.statData.RAW_DATE = date.strftime(self.statData.DATE, '%Y-%m-%d')
+        
+            self.statData.COURS = headerDict.get('course', '')
+            self.statData.INST = headerDict.get('instructor', '')
+            self.statData.KODE = 1
+            self.statData.IDIG = 1
+            self.statData.NCOPY = 1
+        if 'options' in headerDict:
+            self.initializeOptionsFromDict(headerDict['options'])
+        return True
+    
+    def initializeAnswerKeyFromDict(self, answerKey, answerRange=None):
+        self.statData.setDimensions(ITEMN=len(answerKey))
+        self.statData.KORAN = [int(i) for i in answerKey]  if (isinstance(answerKey, str) or isinstance(answerKey, unicode)) else answerKey
+        self.statData.ICHO = (max(self.statData.KORAN) - min(self.statData.KORAN) + 1) if answerRange is None else int(answerRange)
+    
+    def readHeaderFromDict(self, dataSet, isPrimary=False):
+        if isPrimary:
+            if not self.initializeMetaDataFromDict(dataSet, isPrimary=True):
+                return False
+            self.setDataSet(dataSet)
+            
+            # Do we have question sets?
+            if not 'questionSets' in dataSet:
+                raise ValueError('Exam data lacks questionSets array!')
+            self._questionSetIndex = 0
+
+        # Set current focus to the first question set:
+        if self._questionSetIndex < len(self._dataSet['questionSets']):
+            questionSet = self._dataSet['questionSets'][self._questionSetIndex]
+        
+            # Fixup meta-data:
+            if not isPrimary and not self.initializeMetaDataFromDict(questionSet, isPrimary=False):
+                return False
+        
+            # Correct answers:
+            if 'answerKey' not in questionSet:
+                raise ValueError('Question set {:d} lacks an answerKey'.format(self._questionSetIndex))
+            self.initializeAnswerKeyFromDict(questionSet['answerKey'], questionSet.get('answerRange', None))
+        
+            if 'options' in questionSet:
+                self.initializeOptionsFromDict(questionSet['options'])
+        
+            return True
+        return False
+        
+    def readHeader(self, inputFPtr, isContinued=False):
+        if not isContinued:
+            dataSet = self.readInputFile(inputFPtr)
+            headerResult = self.readHeaderFromDict(dataSet, isPrimary=True)
+            if headerResult:
+                self._outputDoc['course'] = self.statData.COURS
+                self._outputDoc['instructor'] = self.statData.INST
+                self._outputDoc['examDate'] = datetime.strftime(self.statData.DATE, '%Y-%m-%d')
+                self._outputDoc['processedTimestamp'] = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
+                self._outputDoc['results'] = []
+            return headerResult
+        else:
+            self._questionSetIndex += 1
+            if self._questionSetIndex < len(self._dataSet['questionSets']):
+                return self.readHeaderFromDict(self._dataSet['questionSets'][self._questionSetIndex], isPrimary=False)
+        return False
+        
+    def initializeStudentDataFromCurrentQuestionSet(self):
+        if self._questionSetIndex is None or self._questionSetIndex >= len(self._dataSet['questionSets']):
+            return False
+        
+        outData = StudentData(self.statData.ITEMN)
+        for group in self._dataSet['questionSets'][self._questionSetIndex]['responses']:
+            outData.startGroup(groupId=group.get('group', None))
+            for studentAnswers in group['answers']:
+                studentAnswers = [int(i) for i in studentAnswers]  if (isinstance(studentAnswers, str) or isinstance(studentAnswers, unicode))  else studentAnswers
+                if len(studentAnswers) != self.statData.ITEMN:
+                    raise ValueError('Invalid response item "{:s}":  {:d} answers should be {:d}'.format(str(studentAnswers), len(studentAnswers), self.statData.ITEMN))
+                
+                # Add a new record:
+                outData.startRecord()
+                
+                # Calcuate the score:
+                score = functools.reduce(lambda a, b: a + b, [0 if (a != b) else 1 for (a, b) in zip(studentAnswers, self.statData.KORAN)])
+                
+                self.statData.KOUNT[[outData.groupCount()]] += 1
+                self.statData.ISUM += score
+                self.statData.ISUMSQ += score**2
+                if self.statData.IDIG == 2:
+                    for i in range(len(studentAnswers) ):
+                        if studentAnswers[i] != 0:
+                            studentAnswers[i] = self.statData.ICHO + 1 - studentAnswers[i]
+                
+                # Set the score and answers:
+                outData.setScore(score)
+                outData.setAnswers(studentAnswers)
+                
+                for i in range(len(studentAnswers)):
+                    if self.statData.KORAN[i] == studentAnswers[i]:
+                        self.statData.ICOUNT[[i + 1]] += 1
+                        self.statData.ITC[[i + 1]] += score
+                    else:
+                        self.statData.ITIC[[i + 1]] += score
+                    if studentAnswers[i] < 0:
+                        self._messages.append('Response for question {:d} for group {:s} is negative.'.format(i, str(outData.currentGroupId())))
+                        continue
+                    elif studentAnswers[i] > self.statData.ICHO:
+                        self._messages.append('Response for question {:d} for group {:s} exceeds possible answers {:d}.'.format(i, str(outData.currentGroupId()), self.statData.ICHO))
+                        continue
+                    
+                    j = studentAnswers[i] + 1
+                    self.statData.ITAB[[i + 1, j, outData.groupCount()]] += 1
+                    self.statData.JTOT[[i + 1, j]] += 1
+                    self.statData.KSUM[[i + 1, j]] += score
+                    
+        self.statData.setDimensions(ITN=outData.totalRecordCount())
+        return outData
+            
+    def readStudentData(self, inputFPtr, outputFPtr):
+        outData = self.initializeStudentDataFromCurrentQuestionSet()
+        if len(self._messages):
+            for msg in self._messages:
+                sys.stderr.write('WARNING:  ' + msg + '\n')
+            self._messages = []
+        if not outData:
+            raise RuntimeError('Failed reading student data.')
+        return outData
+        
+    def summarizeControlCard(self, outputFPtr):
+        section = {
+                'responseForm': 'forward' if (self.statData.IDIG == 1) else 'reverse',
+                'answerKey': self.statData.KORAN,
+                'summaries': []
+            }
+        self._outputDoc['results'].append(section)
+        
+    def processTestResults(self, outputFPtr):
+        self.statData.processTestResults()
+        for message in self.statData.popMessages():
+            sys.stderr.write('ERROR:  In test result processing: {:s}\n', message)
+    
+    def processResultSetForData(self, studentData):
+
+        # To which result set are we adding this stuff?
+        resultSet = self._outputDoc['results'][-1]
+        
+        # Should we add per-question summaries to the doc?
+        JUP = self.statData.NNXYZ
+        
+        for i in range(1, self.statData.ITEMN + 1):
+            JUP += 1
+            KAN = self.statData.KORAN[i - 1]
+            KOR = KAN + 1
+            if self.statData.IDIG == 2:
+                KAN = self.statData.JCHO - KAN
+            
+            questionSummary = {
+                    'questionNumber': JUP,
+                    'correctAnswer': KOR,
+                    'biserialCorrelation': self.statData.BIS[[i]],
+                    'pointBiserialCorrelation': self.statData.PBIS[[i]],
+                    'T': self.statData.T[[i]],
+                    'byAnswer': {
+                        'OMIT': {
+                            'proportionChoosing': self.statData.PROP[[i, 1]],
+                            'answerIndex': 0,
+                            'meanScore': self.statData.CMEAN[[i, 1]],
+                            'responseTotal': self.statData.JTOT[[i, 1]],
+                            'isQuestionable': False,
+                            'perGroupResponseCounts': [self.statData.ITAB[[i, 1, L]] for L in range(1, studentData.groupCount() + 1)]
+                        }
+                    }
+                }
+            JK = self.statData.JCHO
+            for j in range(2, self.statData.JCHO + 1):
+                if self.statData.IDIG == 2:
+                    JK -= 1
+                    K = JK
+                else:
+                    K = j - 1
+                questionSummary['byAnswer'][self.answerSymbolByIndex[j]] = {
+                        'proportionChoosing': self.statData.PROP[[i, j]],
+                        'answerIndex': K,
+                        'meanScore': self.statData.CMEAN[[i, j]],
+                        'responseTotal': self.statData.JTOT[[i, j]],
+                        'isQuestionable': True if (self.statData.IDIST[[i, j]] == 2) else False,
+                        'perGroupResponseCounts': [self.statData.ITAB[[i, j, k]] for k in range(1, studentData.groupCount() + 1)]
+                    }
+        
+            resultSet['summaries'].append(questionSummary)
+        
+        self.statData.NNXYZ += self.statData.ITEMN
+        for i in range(1, self.statData.ITEMN + 1):
+            KEY = self.statData.KORAN[i - 1]
+            self.statData.CNTKEY[[KEY]] += 1.0
+            self.statData.PROSUM[[KEY]] += self.statData.PROP[[i, KEY + 1]]
+            for j in range(2, self.statData.JCHO + 1):
+                self.statData.CNTCHO[[j - 1]] += self.statData.TOT[[i, j]]
+        self.statData.KTN = self.statData.ITN
+        self.statData.KCHO = self.statData.ICHO
+        self.statData.MCOPY = self.statData.NCOPY
+
+    def processAggregateStatistics(self):
+        # Calculation aggregate statistics across all sections:
+        self.statData.calculateAggregateStats()
+        
+        # Begin filling-in the aggregate results dictionary:
+        aggResults = {
+                'meanQuestionDifficulty': self.statData.FMEDI,
+                'biserialCorrelation': self.statData.FMEBIS,
+                'kuderRichardson20Reliability': self.statData.REL,
+                'testMean': self.statData.FMEAN,
+                'variance': self.statData.FVAR,
+                'standardDeviation': self.statData.SDEV,
+                'standardErrorOfMeasurementKR20': self.statData.SEMEAS,
+                'numberOfStudents': self.statData.KTN,
+                'numberOfQuestions': self.statData.ITITEM,
+                
+                'answerFrequencyBreakdown': {
+                        self.answerSymbolByIndex[k + 1]: {
+                               'frequencyPerQuestion': self.statData.PCTKEY[[k]],
+                               'frequencyPerResponse': self.statData.PCTCHO[[k]],
+                               'averageDifficulty': self.statData.AVDIFF[[k]]
+                            } for k in range(1, self.statData.KCHO + 1)
+                    },
+                    
+                'distributionByPassingStatus': [
+                        { 'range': [0, 19], 'numberOfItems': self.statData.IDO },
+                        { 'range': [20, 39], 'numberOfItems': self.statData.IDTW },
+                        { 'range': [40, 59], 'numberOfItems': self.statData.IDTH },
+                        { 'range': [60, 79], 'numberOfItems': self.statData.IDFO },
+                        { 'range': [80, 100], 'numberOfItems': self.statData.IDFI }
+                    ],
+                
+                'distributionByScore': [
+                        { 'range': ['-Infinity', 0.10], 'numberOfItems': self.statData.IDVP },
+                        { 'range': [0.11, 0.30], 'numberOfItems': self.statData.IDP },
+                        { 'range': [0.31, 0.50], 'numberOfItems': self.statData.IDG },
+                        { 'range': [0.51, 0.70], 'numberOfItems': self.statData.IDVG },
+                        { 'range': [0.71, 0.90], 'numberOfItems': self.statData.IDVVG },
+                        { 'range': [0.91, '+Infinity'], 'numberOfItems': self.statData.IDEX }
+                    ]
+            }
+        
+        self._outputDoc['aggregateResults'] = aggResults
+
+    def printResultsCommonCode(self, studentData):
+        self.processResultSetForData(studentData)
+        
+        # Are there more question sets present?
+        if self._questionSetIndex + 1 < len(self._dataSet['questionSets']):
+            return True
+        
+        self.processAggregateStatistics()
+        return False
+
+    def printResults(self, inputFPtr, outputFPtr, studentData):
+        if self.printResultsCommonCode(studentData):
+            return True
+            
+        if self._shouldIndentOutput:
+            json.dump(self._outputDoc, outputFPtr, indent=4)
+        else:
+            json.dump(self._outputDoc, outputFPtr)
+        outputFPtr.write('\n')
+        return False
+        
+        
+try:
+    #
+    # Attempt to load the PyYAML library into this namespace.  If successful, then create the YAMLIOHelper
+    # subclass of the JSONIOHelper class (which is REALLY simple) and register it as a recognized format.
+    from yaml import load as yamlLoad, dump as yamlDump
+    try:
+        from yaml import CLoader as yamlLoader, CDumper as yamlDumper
+    except ImportError:
+        from yaml import Loader as yamlLoader, Dumper as yamlDumper
+
+
+    class YAMLIOHelper(JSONIOHelper):
+        """The YAMLIOHelper is a subclass of the JSONIOHelper.  All data is read from a YAML file."""
+        
+        def readInputFile(self, inputFPtr):
+            return yamlLoad(inputFPtr, Loader=yamlLoader)
+
+        def printResults(self, inputFPtr, outputFPtr, studentData):
+            if self.printResultsCommonCode(studentData):
+                return True
+            
+            yamlDump(self._outputDoc, stream=outputFPtr, Dumper=yamlDumper, indent=4)
+            return False
+
+    # Register the constructor in the formatsRecognized dictionary:
+    formatsRecognized['yaml'] = lambda statsData: YAMLIOHelper(statsData)
+
+except:
+    pass
+    
 
 class StatData:
     """Class that wraps all of the common blocks and data processing present in the original Fortran code."""
@@ -803,15 +1132,15 @@ class StatData:
         self.CNTCHO = SparseStorage(rank=1, fillInValue=0.0)
         self.KORAN = None
         
-        self.FKSUM = SparseStorage(rank=2, fillInValue=0)
-        self.CMEAN = SparseStorage(rank=2, fillInValue=0)
-        self.PROP = SparseStorage(rank=2, fillInValue=0)
-        self.TOT = SparseStorage(rank=2, fillInValue=0)
+        self.FKSUM = SparseStorage(rank=2, fillInValue=0.0)
+        self.CMEAN = SparseStorage(rank=2, fillInValue=0.0)
+        self.PROP = SparseStorage(rank=2, fillInValue=0.0)
+        self.TOT = SparseStorage(rank=2, fillInValue=0.0)
         
         self.AVDIFF = SparseStorage(rank=1, fillInValue=0.0)
         self.BIS = SparseStorage(rank=1, fillInValue=0.0)
         self.DIFI = SparseStorage(rank=1, fillInValue=0.0)
-        self.FCOUNT = SparseStorage(rank=1, fillInValue=0)
+        self.FCOUNT = SparseStorage(rank=1, fillInValue=0.0)
         self.FITC = SparseStorage(rank=1, fillInValue = 0.0)
         self.FITIC = SparseStorage(rank=1, fillInValue = 0.0)
         self.PBIS = SparseStorage(rank=1, fillInValue=0.0)
@@ -823,12 +1152,19 @@ class StatData:
         self.Y = SparseStorage(rank=1, fillInValue=0.0)
         
         self._messages = []
+    
+    def setDimensions(self, ITN=None, ITEMN=None):
+        if ITN is not None:
+            self.ITN = ITN
+            self.FITN = float(self.ITN)
+        if ITEMN is not None:
+            self.ITEMN = ITEMN
+            self.FITEMN = float(self.ITEMN)
+            self.GITEMN = self.GITEMN + self.FITEMN
         
+    
     def prepForDataRead(self):
         """Initialize statistical data object fields that get reset before student data are read."""
-        self.FITN = float(self.ITN)
-        self.FITEMN = float(self.ITEMN)
-        self.GITEMN = self.GITEMN + self.FITEMN
         self.ISUMSQ = 0
         self.ISUM = 0
         self.SER = 0.0
@@ -989,7 +1325,7 @@ class StatData:
                 self.FMNIC[[i]] = self.FMEAN
                 self.doLine570(i)
             elif isclose(self.DIFI[[i]], 1.0):
-                self.FMNCO[[i]] = FMEAN
+                self.FMNCO[[i]] = self.FMEAN
                 self.FMNIC[[i]] = 0.0
                 self.doLine570(i)
             else:
@@ -1006,6 +1342,29 @@ class StatData:
                 else:
                     self.Y[[i]] = 0.39894
                     self.doLine620(i)
+
+    def calculateAggregateStats(self):
+        self.FMEDI = self.SDI / self.GITEMN
+        self.FMEBIS = self.SBIS / self.GITEMN
+        self.CORI = self.FMEBIS**2
+        if isclose(self.FVAR, 0.0):
+            self.REL = 0.0
+            self.SEMEAS = 0.0
+        else:
+            self.REL = (self.GITEMN / (self.GITEMN - 1.0)) * ((self.FVAR - self.VAR) / self.FVAR)
+            self.SEMEAS = self.SDEV * math.sqrt(1.0 - self.REL)
+        for KEY in range(1, self.KCHO + 1):
+            self.PCTKEY[[KEY]] = self.CNTKEY[[KEY]] / self.GITEMN
+            self.PCTCHO[[KEY]] = self.CNTCHO[[KEY]] / (self.FITN * self.GITEMN)
+            if isclose(self.CNTKEY[[KEY]], 0.0):
+                self.AVDIFF[[KEY]] = 0.0
+            else:
+                self.AVDIFF[[KEY]] = self.PROSUM[[KEY]] / self.CNTKEY[[KEY]]
+        self.ITITEM = int(self.GITEMN)
+        if self.MCOPY > 1:
+            self.NCOPY = 3
+        if self.NCOPY == 0:
+            self.NCOPY = 1
 
 #
 # Configure the command line argument parser:
@@ -1029,6 +1388,11 @@ cliParser.add_argument('--append', '-a',
         default=False,
         help='always append to output files'
     )
+cliParser.add_argument('--format', '-f',
+        dest='fileFormat',
+        default='fortran',
+        help='file format to read and write: ' + ', '.join(formatsRecognized.keys())
+    )
 
 # Parse the command line arguments:
 cliArgs = cliParser.parse_args()
@@ -1044,6 +1408,12 @@ if cliArgs.outputFiles is None or len(cliArgs.outputFiles) == 0:
 # Ensure only one stdin is present in input file list:
 if len([v for v in cliArgs.inputFiles if v == '-']) > 1:
     sys.stderr.write('ERROR:  stdin ("-") cannot be used multiple times with --input/-i\n')
+    sys.exit(errno.EINVAL)
+
+# Validate the file format:
+fileFormat = cliArgs.fileFormat.lower()
+if fileFormat not in formatsRecognized:
+    sys.stderr.write('ERROR:  file format "{:s}" is not available'.format(cliArgs.fileFormat))
     sys.exit(errno.EINVAL)
 
 # Starting from empty input and output streams:
@@ -1097,42 +1467,41 @@ while len(cliArgs.inputFiles) > 0:
         # With input and output streams open, process the results in the input file.  First, create an empty
         # StatData object to hold the analysis and parameters:
         stats = StatData()
-        
-        # Create a FortranIOHelper associated with that StatData object.  For now, we're only doing Fortran
-        # input and output files.
-        helper = FortranIOHelper(stats)
-        
+    
+        # Create an i/o helper associated with that StatData object:
+        helper = (formatsRecognized[fileFormat])(stats)
+    
         # Can we read an initial header from that file?
         if helper.readHeader(inputFPtr, False):
             # Excellent, we got a header; go ahead and summarize it and then fixup the answer indices
             # if necessary ((E=1, D=2, ...) vs. (A=1, B=2, ...)):
             helper.summarizeControlCard(outputFPtr)
             helper.fixupAnswerKey()
-            
+        
             # Prepare for reading student data -- basically this is allocating all per-test section arrays
             # and variables:
             stats.prepForDataRead()
-            
+        
             # Attempt to read the student answer data from the input file:
             studentData = helper.readStudentData(inputFPtr, outputFPtr)
-            
+        
             # Now do all the statistics for those test results:
             helper.processTestResults(outputFPtr)
-            
+        
             # Print the summary of the answers (and possibly the overall summary for the entire test);
             # this subroutine will return True if there are more test sections in the input file:
-            while helper.printResults(inputFPtr, outputFPtr):
+            while helper.printResults(inputFPtr, outputFPtr, studentData):
                 # Did we find an additional test section?
                 if helper.readHeader(inputFPtr, True):
                     # Excellent, we got a header; go ahead and summarize it and then fixup the answer indices
                     # if necessary ((E=1, D=2, ...) vs. (A=1, B=2, ...)):
                     helper.summarizeControlCard(outputFPtr)
                     helper.fixupAnswerKey()
-            
+        
                     # Prepare for reading student data -- basically this is allocating all per-test section arrays
                     # and variables:
                     stats.prepForDataRead()
-                    
+                
                     # Attempt to read the student answer data from the input file:
                     studentData = helper.readStudentData(inputFPtr, outputFPtr)
 
