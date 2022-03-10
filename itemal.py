@@ -1391,7 +1391,7 @@ cliParser.add_argument('--append', '-a',
 cliParser.add_argument('--format', '-f',
         dest='fileFormat',
         default='fortran',
-        help='file format to read and write: ' + ', '.join(formatsRecognized.keys())
+        help='file format to read and write (fortran is the default): ' + ', '.join(formatsRecognized.keys())
     )
 
 # Parse the command line arguments:
@@ -1413,7 +1413,7 @@ if len([v for v in cliArgs.inputFiles if v == '-']) > 1:
 # Validate the file format:
 fileFormat = cliArgs.fileFormat.lower()
 if fileFormat not in formatsRecognized:
-    sys.stderr.write('ERROR:  file format "{:s}" is not available'.format(cliArgs.fileFormat))
+    sys.stderr.write('ERROR:  file format "{:s}" is not available\n'.format(cliArgs.fileFormat))
     sys.exit(errno.EINVAL)
 
 # Starting from empty input and output streams:
