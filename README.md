@@ -1,6 +1,6 @@
 # ITEMAL
 
-ITEMAL performs item analyses of individual test questions as well as entire tests. It can be used to analyze data collected on optical scan sheets and already processed by the test scoring program or any scored test data that has been placed in a disk file.  This is a Python translation of the original _ancient_ Fortran code.
+ITEMAL performs item analyses of individual test questions as well as entire tests. It can be used to analyze data collected on optical scan sheets and already processed by the test scoring program or any scored test data that has been placed in a disk file.  This is a Python translation of the original _ancient_ Fortran code in [itemal.f](itemal.f).
 
 See [this page](https://services.udel.edu/TDClient/32/Portal/KB/ArticleDet?ID=386) for documentation of the input file format, etc.  The [itemal.in](examples/itemal.in) included in this repository may be more easily understood, though, as the documentation page doesn't agree 100% with the state of the itemal Fortran program.
 
