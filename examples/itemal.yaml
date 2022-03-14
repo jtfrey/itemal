@@ -11,18 +11,18 @@ options:
     should-eval-full-exam-only: false
     is-order-reversed: false
     number-of-copies: 1
-questionSets:
+exam-sections:
     # Each separate question section in this list is a dictionary with
     # the structure shown here; an options override dictionary keyed
     # by 'options' can optionally appear:
-    - answerKey: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    - answer-key: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
       # Total number of choices for answers (e.g. A, B, C, D => 4):
-      answerRange: 4
+      responses-per-question: 4
       responses:
         # Responses are provided as a list of groups; each group is a
         # dictionary with an arbitrary (and unique) identifier and a
         # list of student answers keyed by 'answers':
-        - group: morning
+        - group-id: morning
           answers:
             # Answers can be presented as a list of integers or a string
             # of digits in the range [1,answerRange]:
@@ -30,13 +30,13 @@ questionSets:
             - "12341234121133113311"
             - [1, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2]
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 3, 3, 1, 1]
-        - group: afternoon
+        - group-id: afternoon
           answers:
             - [3, 3, 1, 1, 3, 3, 1, 1, 3, 3, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4]
             - [4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1]
             - [1, 2, 3, 4, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1]
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
-        - group: evening
+        - group-id: evening
           answers:
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 3, 3, 2, 2, 3, 3, 2, 2]
             - [3, 3, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]

@@ -695,7 +695,7 @@ class StatData(object):
         
         self.ITEMN = examSection.questionCount()
         self.FITEMN = float(self.ITEMN)
-        self.GITEMN = self.GITEMN + self.FITEMN
+        self.GITEMN += self.FITEMN
         
         # Initialize the rest of the per-section variables:
         self.ISUMSQ = 0
