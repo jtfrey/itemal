@@ -15,3 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Minor corrections w.r.t. the original Fortran
 
+## [0.0.3] - 2022-03-14
+### Changed
+- Restructured to a model with i/o and processing fully separated.
+  - Exam data modeled as Python objects
+  - I/O classes read input file and return an Exam object
+  - StatData instance encapsulates all the computation from the orginal Fortran
+    - Computation adds results dict to exam and exam sections
+  - I/O classes accept an Exam object and write output file
+
