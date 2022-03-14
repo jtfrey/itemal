@@ -1128,7 +1128,7 @@ try:
     
         def writeExamDataAndSummaries(self, outputFPtr, examData):
             document = examData.exportAsDict()
-            yamlDump(outputDoc, stream=outputFPtr, Dumper=yamlDumper, indent=4)
+            yamlDump(document, stream=outputFPtr, Dumper=yamlDumper, indent=4)
 
     inputFormatsRecognized['yaml'] = lambda:YAMLIO()
     outputFormatsRecognized['yaml'] = lambda:YAMLIO()
