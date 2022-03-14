@@ -1675,19 +1675,19 @@ while len(cliArgs.inputFiles) > 0:
                 sys.stderr.write('ERROR:  failed to open output file "{:s}":  {:s}\n'.format(outputFile, str(E)))
                 sys.exit(errno.EIO)
     
-#    try:
-    inputHelper = inputFormatsRecognized[inputFileFormat]()
-    outputHelper = outputFormatsRecognized[outputFileFormat]()
+    try:
+        inputHelper = inputFormatsRecognized[inputFileFormat]()
+        outputHelper = outputFormatsRecognized[outputFileFormat]()
     
-    exam = inputHelper.readExamData(inputFPtr)
-    exam.reverseAnswerOrderingIfNecessary()
-    exam.calculateScoresFromAnswerKeys()
+        exam = inputHelper.readExamData(inputFPtr)
+        exam.reverseAnswerOrderingIfNecessary()
+        exam.calculateScoresFromAnswerKeys()
     
-    stats = StatData()
-    stats.processExam(exam)
+        stats = StatData()
+        stats.processExam(exam)
 
-    outputHelper.writeExamDataAndSummaries(outputFPtr, exam)
+        outputHelper.writeExamDataAndSummaries(outputFPtr, exam)
                     
-#    except Exception as E:
-#        print('ERROR:  ' + str(E))
-#        sys.exit(1)
+    except Exception as E:
+        print('ERROR:  ' + str(E))
+        sys.exit(1)
