@@ -57,7 +57,7 @@ try:
 except:
     def genericDateParse(dateString):
         """Attempt to parse a date given a set of expected formats for strptime().  Used if the dateparser module is not present in this Python instance."""
-        for dateFormat in [ '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d', '%m%d%y', '%x' ]:
+        for dateFormat in [ '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d', '%m%d%y', '%x' ]:
             try:
                 return datetime.datetime.strptime(dateString, dateFormat)
             except:
@@ -460,10 +460,8 @@ class ExamSection(ITEMALData):
             # If a maximum number of responses per question is set, then we'll need to verify the
             # new group of answers doesn't have any answer that exceeds that limit.  But if our
             # maximum is not yet set, we need to set it now to reflect the max of the new set:
-            if self._responsesPerQuestion == 0:
+            if self._responsesPerQuestion == 0 or self._responsesPerQuestion < studentAnswers.maxResponseCount():
                 self._responsesPerQuestion = studentAnswers.maxResponseCount()
-            elif self._responsesPerQuestion < studentAnswers.maxResponseCount():
-                raise ValueError('Attempt to add answer group with maximum response count {:d} that exceeds exam section count {:d}.'.format(studentAnswers.maxResponseCount(), self._responsesPerQuestion))
         self._studentAnswersGroups.append(studentAnswers)
     
     def fortranFormatString(self):
@@ -536,7 +534,7 @@ class Exam(ITEMALData):
         self._statisticalSummary = None
         self._options = Options()
         if fromDict is not None:
-            self._examId = fromDict['exam-id'] if ('exam-id' in fromDict) else Exam.nextExamId()
+            self._examId = str(fromDict['exam-id']) if ('exam-id' in fromDict) else Exam.nextExamId()
             self._courseName = fromDict.get('course-name', self._courseName)
             self._instructor = fromDict.get('instructor', self._instructor)
             
@@ -1096,7 +1094,7 @@ class JSONIO(BaseIO):
         self._prettyPrint = shouldPrintPretty
 
     def readExamData(self, inputFPtr):
-        return json.load(inputFPtr)
+        return Exam(fromDict=json.load(inputFPtr))
     
     def writeExamDataAndSummaries(self, outputFPtr, examData):
         document = examData.exportAsDict()
@@ -1106,6 +1104,7 @@ class JSONIO(BaseIO):
             json.dump(document, outputFPtr, indent=4)
         else:
             json.dump(document, outputFPtr)
+        outputFPtr.write('\n')
 
 ##
 ###
@@ -1124,7 +1123,7 @@ try:
     class YAMLIO(BaseIO):
 
         def readExamData(self, inputFPtr):
-            return yamlLoad(inputFPtr, Loader=yamlLoader)
+            return Exam(fromDict=yamlLoad(inputFPtr, Loader=yamlLoader))
     
         def writeExamDataAndSummaries(self, outputFPtr, examData):
             document = examData.exportAsDict()
@@ -1248,11 +1247,15 @@ class FortranIO(BaseIO):
             # The 'values' variable contains the last-read header line; pull the exam section's
             # dimensions from that:
             #
-            nStudents = self.stringToIntWithDefault(values[35:41])      # Number of exam responses
-            nQuestions = self.stringToIntWithDefault(values[41:46])     # Number of questions on exam
+            nStudents = self.stringToIntWithDefault(values[35:41])          # Number of exam responses
+            nQuestions = self.stringToIntWithDefault(values[41:46])         # Number of questions on exam
             
             # Create the exam section now:
             examSection = ExamSection()
+            
+            maxRespPerQuestion = self.stringToIntWithDefault(values[51:56]) # Maximum number of responses per question
+            if maxRespPerQuestion > 0:
+                examSection.setResponsesPerQuestion(maxRespPerQuestion)
             
             # Generate options for section:
             idig = self.stringToIntWithDefault(values[56:61])               # 1 = forward order (A, B, ...), 2 = reverse order (E, D, ...)
@@ -1422,13 +1425,14 @@ class FortranIO(BaseIO):
             while q < len(statsData):
                 question = statsData[q]
                 q += 1
+                self._runningQuestionNum += 1
                 
                 if question['should-insert-new-page']:
                     # '1',15X,'ITEM NUMBER',I4,8X,'CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * ' /
-                    outputText += '1               ITEM NUMBER{:4d}        CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * \n\n'.format(q)
+                    outputText += '1               ITEM NUMBER{:4d}        CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * \n\n'.format(self._runningQuestionNum)
                 else:
                     # ' ',15X,'ITEM NUMBER',I4,8X,'CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * ' /
-                    outputText += '                ITEM NUMBER{:4d}        CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * \n\n'.format(q)
+                    outputText += '                ITEM NUMBER{:4d}        CORRECT ANSWER AND ITEM DIFFICULTY INDEX ARE IDENTIFIED BY  * \n\n'.format(self._runningQuestionNum)
                 
 
                 # '   OPTIONS',5X,'1ST',4X,'2ND',4X,'3RD',4X,'4TH',4X,'5TH',3X,'RESPONSE',4X,'PROPORTION',4X,'MEAN',6X,'OPTIONS'/ 14X,'GROUP',2X,'GROUP',2X,'GROUP',2X,'GROUP',2X,'GROUP',4X,'TOTAL',6X,'CHOOSING',5X,'SCORE',3X,'QUESTIONABLE'
@@ -1488,6 +1492,7 @@ class FortranIO(BaseIO):
         outputFPtr.write(outputText*examSection.options()['number-of-copies'])
     
     def writeExamDataAndSummaries(self, outputFPtr, examData):
+        self._runningQuestionNum = 0
         for examSection in examData.examSections():
             # Write header for the exam section:
             self.writeExamSection(outputFPtr, examData, examSection)
@@ -1667,18 +1672,19 @@ while len(cliArgs.inputFiles) > 0:
                 sys.stderr.write('ERROR:  failed to open output file "{:s}":  {:s}\n'.format(outputFile, str(E)))
                 sys.exit(errno.EIO)
     
-    try:
-        inputHelper = inputFormatsRecognized[inputFileFormat]()
-        outputHelper = outputFormatsRecognized[outputFileFormat]()
-        
-        exam = inputHelper.readExamData(inputFPtr)
-        exam.reverseAnswerOrderingIfNecessary()
+#    try:
+    inputHelper = inputFormatsRecognized[inputFileFormat]()
+    outputHelper = outputFormatsRecognized[outputFileFormat]()
+    
+    exam = inputHelper.readExamData(inputFPtr)
+    exam.reverseAnswerOrderingIfNecessary()
+    exam.calculateScoresFromAnswerKeys()
+    
+    stats = StatData()
+    stats.processExam(exam)
 
-        stats = StatData()
-        stats.processExam(exam)
-
-        outputHelper.writeExamDataAndSummaries(outputFPtr, exam)
+    outputHelper.writeExamDataAndSummaries(outputFPtr, exam)
                     
-    except Exception as E:
-        print('ERROR:  ' + str(E))
-        sys.exit(1)
+#    except Exception as E:
+#        print('ERROR:  ' + str(E))
+#        sys.exit(1)

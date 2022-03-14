@@ -350,7 +350,7 @@
 
                     DATE (MONTH, DAY, YEAR)     9  13  12
 
-                    NUMBER OF STUDENTS     3
+                    NUMBER OF STUDENTS    10
 
                     NUMBER OF ITEMS    2
 
@@ -373,13 +373,13 @@
    OPTIONS     1ST    2ND    3RD    4TH    5TH   RESPONSE    PROPORTION    MEAN      OPTIONS
               GROUP  GROUP  GROUP  GROUP  GROUP    TOTAL      CHOOSING     SCORE   QUESTIONABLE
     OMIT       0      0      0      0      0        0          0.000        0.00
-  *A OR 1      2      0      0      0      0        2        * 0.667        1.50         
-   B OR 2      1      0      0      0      0        1          0.333        0.00         
-   C OR 3      0      0      0      0      0        0          0.000        0.00        ?
+  *A OR 1      3      2      1      0      0        6        * 0.600        1.67         
+   B OR 2      1      2      0      0      0        3          0.300        0.00         
+   C OR 3      0      0      1      0      0        1          0.100        1.00         
    D OR 4      0      0      0      0      0        0          0.000        0.00        ?
-0  TOTAL       3      0      0      0      0        3
-0BISERIAL CORRELATION BETWEEN ITEM SCORE AND TOTAL SCORE ON TEST =  0.913
- POINT-BISERIAL CORRELATION =  0.707              T =  1.000
+0  TOTAL       4      4      2      0      0       10
+0BISERIAL CORRELATION BETWEEN ITEM SCORE AND TOTAL SCORE ON TEST =  1.004
+ POINT-BISERIAL CORRELATION =  0.793              T =  3.677
 
 
 
@@ -388,13 +388,13 @@
    OPTIONS     1ST    2ND    3RD    4TH    5TH   RESPONSE    PROPORTION    MEAN      OPTIONS
               GROUP  GROUP  GROUP  GROUP  GROUP    TOTAL      CHOOSING     SCORE   QUESTIONABLE
     OMIT       0      0      0      0      0        0          0.000        0.00
-   A OR 1      1      0      0      0      0        1          0.333        0.00         
-  *B OR 2      1      0      0      0      0        1        * 0.333        2.00         
-   C OR 3      1      0      0      0      0        1          0.333        1.00         
+   A OR 1      1      2      0      0      0        3          0.300        0.00         
+  *B OR 2      2      1      2      0      0        5        * 0.500        1.80         
+   C OR 3      1      1      0      0      0        2          0.200        1.00         
    D OR 4      0      0      0      0      0        0          0.000        0.00        ?
-0  TOTAL       3      0      0      0      0        3
-0BISERIAL CORRELATION BETWEEN ITEM SCORE AND TOTAL SCORE ON TEST =  0.913
- POINT-BISERIAL CORRELATION =  0.707              T =  1.000
+0  TOTAL       4      4      2      0      0       10
+0BISERIAL CORRELATION BETWEEN ITEM SCORE AND TOTAL SCORE ON TEST =  1.002
+ POINT-BISERIAL CORRELATION =  0.799              T =  3.764
 
 
 
@@ -402,17 +402,17 @@
 
 
 
-               THE MEAN ITEM DIFFICULTY FOR THE ENTIRE TEST =  0.527
+               THE MEAN ITEM DIFFICULTY FOR THE ENTIRE TEST =  0.532
 
-               THE MEAN ITEM SCORE - TOTAL SCORE BISERIAL CORRELATION = 0.852
+               THE MEAN ITEM SCORE - TOTAL SCORE BISERIAL CORRELATION = 0.860
 
-               KUDER-RICHARDSON 20 RELIABILITY = -4.468
+               KUDER-RICHARDSON 20 RELIABILITY = -6.208
 
-               TEST MEAN =   1.00   VARIANCE =      1.00   STANDARD DEVIATION =   1.00
+               TEST MEAN =   1.10   VARIANCE =      0.77   STANDARD DEVIATION =   0.88
 
-               STANDARD ERROR OF MEASUREMENT (BASED ON KR-20) =   2.34
+               STANDARD ERROR OF MEASUREMENT (BASED ON KR-20) =   2.35
 
-               NUMBER OF STUDENTS =    3        NUMBER OF ITEMS ON TEST =   22
+               NUMBER OF STUDENTS =   10        NUMBER OF ITEMS ON TEST =   22
 
 
 
@@ -423,8 +423,8 @@
 
       PERCENT PASSING           NUMBER OF ITEMS                                 CORRELATIONS    NUMBER OF ITEMS
 0          0 - 19                      0                                       NEGATIVE - .10          0
-          20 - 39                      1                                          .11 - .30            1
-          40 - 59                     10                                          .31 - .50            0
+          20 - 39                      0                                          .11 - .30            1
+          40 - 59                     11                                          .31 - .50            0
           60 - 79                     11                                          .51 - .70            3
           80 -100                      0                                          .71 - .90            8
                                                                                   .91 -               10
@@ -434,10 +434,10 @@
 
                                         CHOICES     % KEYED     % CHOSEN     AVG. DIFF.
 
-                                           A         0.273        1.000         0.578
-                                           B         0.273        0.652         0.506
-                                           C         0.227        0.818         0.520
-                                           D         0.227        0.652         0.500
+                                           A         0.273        0.327         0.567
+                                           B         0.273        0.223         0.533
+                                           C         0.227        0.255         0.520
+                                           D         0.227        0.195         0.500
 
 
           % KEYED= FREQUENCY OF A GIVEN KEY DIVIDED BY THE NUMBER OF ITEMS.

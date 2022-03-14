@@ -1,16 +1,16 @@
 #
 # This is an example test results input file in YAML format.
 #
-examId: 1
-course: PSY101 10
+exam-id: 1
+course-name: PSY101 10
 instructor: S. Freud
-date: 2021-09-13
+exam-date: 2012-09-13
 options:
     # These options can be set in each of the questionSets dictionaries,
     # too, primarily to override the isReverseOrder on a per-set basis.
-    testSummaryOnly: true
-    isReverseOrder: false
-    numberOfCopies: 1
+    should-eval-full-exam-only: false
+    is-order-reversed: false
+    number-of-copies: 1
 questionSets:
     # Each separate question section in this list is a dictionary with
     # the structure shown here; an options override dictionary keyed
@@ -22,7 +22,7 @@ questionSets:
         # Responses are provided as a list of groups; each group is a
         # dictionary with an arbitrary (and unique) identifier and a
         # list of student answers keyed by 'answers':
-        - group: 1
+        - group: morning
           answers:
             # Answers can be presented as a list of integers or a string
             # of digits in the range [1,answerRange]:
@@ -30,13 +30,13 @@ questionSets:
             - "12341234121133113311"
             - [1, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2]
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 3, 3, 1, 1]
-        - group: 2
+        - group: afternoon
           answers:
             - [3, 3, 1, 1, 3, 3, 1, 1, 3, 3, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4]
             - [4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1]
             - [1, 2, 3, 4, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1, 4, 4, 1, 1]
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
-        - group: 3
+        - group: evening
           answers:
             - [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 3, 3, 2, 2, 3, 3, 2, 2]
             - [3, 3, 1, 1, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]

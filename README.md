@@ -17,7 +17,8 @@ The Python version follows this same behavior but augments it with the ability t
 ```
 $ ./itemal.py --help
 usage: itemal.py [-h] [--input <file|->] [--output <file|->] [--append]
-                 [--format FILEFORMAT]
+                 [--format FILEFORMAT] [--input-format INPUTFILEFORMAT]
+                 [--output-format OUTPUTFILEFORMAT]
 
 Statistical analyses of multiple-choice responses.
 
@@ -39,6 +40,12 @@ optional arguments:
   --format FILEFORMAT, -f FILEFORMAT
                         file format to read and write (fortran is the
                         default): fortran, json, json+pretty, yaml
+  --input-format INPUTFILEFORMAT, -I INPUTFILEFORMAT
+                        file format to read (fortran is the default): fortran,
+                        json, json+pretty, yaml
+  --output-format OUTPUTFILEFORMAT, -O OUTPUTFILEFORMAT
+                        file format to write (fortran is the default):
+                        fortran, json, json+pretty, yaml
 
 $ itemal.py --input examples/itemal.in --output itemal.out
 ```
@@ -46,6 +53,19 @@ $ itemal.py --input examples/itemal.in --output itemal.out
 the second command is essentially the same as the traditional invocation above.  The JSON file format (see [itemal.json](examples/itemal.json) and  (see [itemal.json.out](examples/itemal.json.out)) ) can be chosen for input and ouput by using the `--format=json` flag.  The YAML file format (see [itemal.yaml](examples/itemal.yaml) and [itemal.yaml.out](examples/itemal.yaml.out)) is conditionally available:  if your Python environment has the PyYAML module installed, the "yaml" FILEFORMAT will be present in the help text as above and can be selected using `--format=yaml`.  The lack of PyYAML is also readily apparent if you try to use that format:
 
 ```
-$ itemal.py --format=yaml < examples/itemal.yaml
+$ ./itemal.py --format=yaml < examples/itemal.yaml
 ERROR:  file format "yaml" is not available
+```
+
+The input and output formats *can* be mixed — a Fortran input file can be read and YAML output can be generated:
+
+```
+$ ./itemal.py --input-format=fortran --output-format=yaml < examples/itemal.yaml
+course-name: 'PSY101 10 '
+exam-date: 2012-09-13 00:00:00
+exam-id: '1'
+exam-sections:
+-   answer-key: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+    options: {is-order-reversed: false, number-of-copies: 1, should-eval-full-exam-only: false}
+       :
 ```
