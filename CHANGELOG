@@ -10,3 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implementation of a JSON i/o helper (json module is a constant in Python)
 - Implementation of a YAML i/o helper present conditionally (if PyYAML is available)
 - Generated example input files and output files produced by this program
+
+## [0.0.2] - 2022-03-14
+### Changed
+- Minor corrections w.r.t. the original Fortran
+

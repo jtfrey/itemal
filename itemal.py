@@ -432,7 +432,7 @@ class FortranIOHelper(BaseIOHelper):
             #  242  FORMAT (/25X,'INPUT FORMAT',3X, A72 / 25X,'RESPONSE FORM', I2,
             #      1 '=A,', I2,'=B, ...'  )
             outputFPtr.write(
-                    '\n                         INPUT FORMAT   {:72.72s}\n                         RESPONSE FORM{:2d}=A,{:2d}=B, ...\n'.format(self.FMTSTR, self.statData.ICHO, self.statData.ICHO + 1))
+                    '\n                         INPUT FORMAT   {:72.72s}\n                         RESPONSE FORM{:2d}=A,{:2d}=B, ...\n'.format(self.FMTSTR, self.statData.ICHO, self.statData.ICHO - 1))
         
         #  250  FORMAT (                             /20X,'NUMBER OF COPIES OF OUT
         #      1PUT (MAX. ALLOWED=2)', I3 //20X,'CORRECT ANSWERS IN GROUPS OF FIVE
@@ -573,7 +573,7 @@ class FortranIOHelper(BaseIOHelper):
             L2 = 1
             JUP = self.statData.NNXYZ
             
-            # Leftover debug kruft?
+            # New page token:
             outputFPtr.write('1\n')
             
             for i in range(1, self.statData.ITEMN + 1):
@@ -1306,7 +1306,6 @@ class StatData:
         self.FVAR = (self.FITN * self.FSUMSQ - self.FSUM**2) / (self.FITN * (self.FITN - 1.0))
         self.SER = 1.0 / math.sqrt(self.FITN - 1.0)
         self.SDEV = math.sqrt(self.FVAR)
-        
         for i in range(1, self.ITEMN + 1):
             for j in range(1, self.JCHO + 1):
                 self.IDIST[[i, j]] = 2 if self.PROP[[i, j]] < self.CHEK[self.ICHO] else 1
