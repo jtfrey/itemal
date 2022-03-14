@@ -542,7 +542,10 @@ class Exam(ITEMALData):
                 self._options.mergeWithOptionsDict(fromDict['options'])
             
             if 'exam-date' in fromDict:
-                self._examDate = genericDateParse(fromDict['exam-date'])
+                if isinstance(fromDict['exam-date'], (str, unicode)):
+                    self._examDate = genericDateParse(fromDict['exam-date'])
+                else:
+                    self._examDate = fromDict['exam-date']
             
             if 'exam-sections' in fromDict:
                 for sectionDict in fromDict['exam-sections']:
