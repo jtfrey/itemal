@@ -24,3 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Computation adds results dict to exam and exam sections
   - I/O classes accept an Exam object and write output file
 
+## [0.0.4] - 2022-03-14
+### Changed
+- Debug fixes of the JSON and YAML i/o formats
+
