@@ -30,6 +30,24 @@ import math
 ####
 ##
 
+#
+# File formats recognized by the program:
+#
+inputFormatsRecognized = {
+        'fortran':      lambda:FortranIO(),
+        'json':         lambda:JSONIO(),
+        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
+    }
+outputFormatsRecognized = {
+        'fortran':      lambda:FortranIO(),
+        'json':         lambda:JSONIO(),
+        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
+    }
+
+##
+####
+##
+
 try:
     import dateparser
     
@@ -1112,6 +1130,9 @@ try:
             document = examData.exportAsDict()
             yamlDump(outputDoc, stream=outputFPtr, Dumper=yamlDumper, indent=4)
 
+    inputFormatsRecognized['yaml'] = lambda:YAMLIO()
+    outputFormatsRecognized['yaml'] = lambda:YAMLIO()
+
 except:
     pass
 
@@ -1528,23 +1549,6 @@ class FortranIO(BaseIO):
         for copyNum in range(exam.options()['number-of-copies']):
             outputFPtr.write(outputText)
 
-
-
-
-
-#
-# File formats recognized by the program:
-#
-inputFormatsRecognized = {
-        'fortran':      lambda:FortranIO(),
-        'json':         lambda:JSONIO(),
-        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
-    }
-outputFormatsRecognized = {
-        'fortran':      lambda:FortranIO(),
-        'json':         lambda:JSONIO(),
-        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
-    }
 
 #
 # Configure the command line argument parser:
