@@ -28,3 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Debug fixes of the JSON and YAML i/o formats
 
+## [0.0.5] - 2022-03-15
+### Added
+- Excel export via Pandas (DataFrames, to_excel)
+### Changed
+- Rearranged BaseIO class hierarchy to embed and carry the "file pointer" in the instance of the class (came up because of how Pandas Excel export works)
+- Minor bug corrections

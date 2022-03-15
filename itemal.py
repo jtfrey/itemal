@@ -34,15 +34,25 @@ import math
 # File formats recognized by the program:
 #
 inputFormatsRecognized = {
-        'fortran':      lambda:FortranIO(),
-        'json':         lambda:JSONIO(),
-        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
+        'fortran':      lambda *args, **kwargs:FortranIO(*args, **kwargs),
+        'json':         lambda *args, **kwargs:JSONIO(*args, **kwargs),
+        'json+pretty':  lambda *args, **kwargs:JSONIO(*args, shouldPrintPretty=True, **kwargs)
     }
 outputFormatsRecognized = {
-        'fortran':      lambda:FortranIO(),
-        'json':         lambda:JSONIO(),
-        'json+pretty':  lambda:JSONIO(shouldPrintPretty=True)
+        'fortran':      lambda *args, **kwargs:FortranIO(*args, **kwargs),
+        'json':         lambda *args, **kwargs:JSONIO(*args, **kwargs),
+        'json+pretty':  lambda *args, **kwargs:JSONIO(*args, shouldPrintPretty=True, **kwargs)
     }
+
+##
+####
+##
+
+try:
+    stringTypes = (basestring)
+except:
+    stringTypes = (str)
+
 
 ##
 ####
@@ -201,7 +211,7 @@ class Options(ITEMALData):
     
     def exportAsDict(self):
         """Add an 'options' key to the base export dictionary with any option attributes for the receiver."""
-        d = super(Options, self).exportAsDict()
+        d = ITEMALData.exportAsDict(self)
         d.update(self._values)
         return d
     
@@ -260,7 +270,7 @@ Scores can be provided on initialization from the dictionary, but can also be ca
     
     def exportAsDict(self):
         """Add the receiver's fields to the export dict."""
-        d = super(StudentAnswers, self).exportAsDict()
+        d = ITEMALData.exportAsDict(self)
         d.update({
                 'scores': self.scores(),
                 'answers': self.answers(),
@@ -347,7 +357,7 @@ class ExamSection(ITEMALData):
     
     def exportAsDict(self):
         """Add the receiver's fields to the export dict."""
-        d = super(ExamSection, self).exportAsDict()
+        d = ITEMALData.exportAsDict(self)
         d.update({
                 'responses-per-question': self.responsesPerQuestion(),
                 'options': self.options().exportAsDict(),
@@ -390,7 +400,7 @@ class ExamSection(ITEMALData):
     def __len__(self):
         return len(self._studentAnswersGroups)
     def __getitem__(self, key):
-        if isinstance(key, (str, unicode)):
+        if isinstance(key, stringTypes):
             return self.studentAnswersForGroupId(key)
         return self._studentAnswersGroups[key]
     
@@ -505,7 +515,7 @@ class Exam(ITEMALData):
     
     def exportAsDict(self):
         """Add the receiver's fields to the export dict."""
-        d = super(Exam, self).exportAsDict()
+        d = ITEMALData.exportAsDict(self)
         d.update({
                 'exam-id': self.examId(),
                 'course-name': self.courseName(),
@@ -542,7 +552,7 @@ class Exam(ITEMALData):
                 self._options.mergeWithOptionsDict(fromDict['options'])
             
             if 'exam-date' in fromDict:
-                if isinstance(fromDict['exam-date'], (str, unicode)):
+                if isinstance(fromDict['exam-date'], stringTypes):
                     self._examDate = genericDateParse(fromDict['exam-date'])
                 else:
                     self._examDate = fromDict['exam-date']
@@ -1075,14 +1085,44 @@ class StatData(object):
 
 class BaseIO(object):
 
-    def readExamData(self, inputFPtr):
+    def __init__(self, filePath=None, filePtr=None, isReadOnly=False, shouldAppend=False, shouldClose=True):
+        """By default do nothing."""
+        pass
+        
+    def __del__(self):
+        """By default do nothing."""
+        pass
+
+    def closeFile(self, filePtr):
+        """Concrete subclasses should override this method."""
+        raise NotImplementedError('No closeFile() method implemented for the {:s} class.'.format(self.__class__.__name__))
+
+    def readExamData(self):
         """Concrete subclasses should override this method."""
         raise NotImplementedError('No readExamData() method implemented for the {:s} class.'.format(self.__class__.__name__))
     
-    def writeExamDataAndSummaries(self, outputFPtr, examData):
+    def writeExamDataAndSummaries(self, examData):
         """Concrete subclasses should override this method."""
         raise NotImplementedError('No writeExamDataAndSummaries() method implemented for the {:s} class.'.format(self.__class__.__name__))
 
+class TextIO(BaseIO):
+
+    def __init__(self, filePath=None, filePtr=None, isReadOnly=False, shouldAppend=False, shouldClose=True, shouldPrintPretty = False):
+        BaseIO.__init__(self, filePath=filePath, filePtr=filePtr, isReadOnly=isReadOnly, shouldAppend=shouldAppend, shouldClose=shouldClose)
+        if filePath is not None:
+            self._filePtr = open(filePath, ('r' if isReadOnly else ('a' if shouldAppend else 'w')))
+        elif filePtr is not None:
+            self._filePtr = filePtr
+        else:
+            raise RuntimeError('No file path or object provided to {:s} initialization method.'.format(self.__class__.__name__))
+        self._shouldClose = bool(shouldClose)
+
+    def __del__(self):
+        if self._shouldClose:
+            self._filePtr.close()
+    
+    def filePtr(self):
+        return self._filePtr
 
 ##
 ####
@@ -1090,32 +1130,31 @@ class BaseIO(object):
 
 import json
 
-class JSONIO(BaseIO):
+class JSONIO(TextIO):
 
-    def __init__(self, shouldPrintPretty = False):
-        super(JSONIO, self).__init__()
+    def __init__(self, filePath=None, filePtr=None, isReadOnly=False, shouldAppend=False, shouldClose=True, shouldPrintPretty=False):
+        TextIO.__init__(self, filePath=filePath, filePtr=filePtr, isReadOnly=isReadOnly, shouldAppend=shouldAppend, shouldClose=shouldClose)
         self._prettyPrint = shouldPrintPretty
 
-    def readExamData(self, inputFPtr):
-        return Exam(fromDict=json.load(inputFPtr))
+    def readExamData(self):
+        return Exam(fromDict=json.load(self.filePtr()))
     
-    def writeExamDataAndSummaries(self, outputFPtr, examData):
+    def writeExamDataAndSummaries(self, examData):
         document = examData.exportAsDict()
         if 'exam-date' in document:
             document['exam-date'] = datetime.datetime.strftime(document['exam-date'], '%Y-%m-%d')
         if self._prettyPrint:
-            json.dump(document, outputFPtr, indent=4)
+            json.dump(document, self.filePtr(), indent=4)
         else:
-            json.dump(document, outputFPtr)
-        outputFPtr.write('\n')
+            json.dump(document, self.filePtr())
+        self.filePtr().write('\n')
 
 ##
 ###
 ##
 
 try:
-    #
-    # Attempt to load the PyYAML library into this namespace.  If successful, then create the YAMLIOHelper
+    # Attempt to load the PyYAML library into this namespace.  If successful, then create the YAMLIO
     # subclass of the JSONIOHelper class (which is REALLY simple) and register it as a recognized format.
     from yaml import load as yamlLoad, dump as yamlDump
     try:
@@ -1123,17 +1162,17 @@ try:
     except ImportError:
         from yaml import Loader as yamlLoader, Dumper as yamlDumper
 
-    class YAMLIO(BaseIO):
+    class YAMLIO(TextIO):
 
-        def readExamData(self, inputFPtr):
-            return Exam(fromDict=yamlLoad(inputFPtr, Loader=yamlLoader))
+        def readExamData(self):
+            return Exam(fromDict=yamlLoad(self.filePtr(), Loader=yamlLoader))
     
-        def writeExamDataAndSummaries(self, outputFPtr, examData):
+        def writeExamDataAndSummaries(self, examData):
             document = examData.exportAsDict()
-            yamlDump(document, stream=outputFPtr, Dumper=yamlDumper, indent=4)
+            yamlDump(document, stream=self.filePtr(), Dumper=yamlDumper, indent=4)
 
-    inputFormatsRecognized['yaml'] = lambda:YAMLIO()
-    outputFormatsRecognized['yaml'] = lambda:YAMLIO()
+    inputFormatsRecognized['yaml'] = lambda *args, **kwargs:YAMLIO(*args, **kwargs)
+    outputFormatsRecognized['yaml'] = lambda *args, **kwargs:YAMLIO(*args, **kwargs)
 
 except:
     pass
@@ -1142,7 +1181,134 @@ except:
 ####
 ##
 
-class FortranIO(BaseIO):
+try:
+    # Attempt to load the Pandas library into this namespace.  If successful, then create the
+    # ExcelIO subclass of the BaseIO class and register it as a recognized output format.
+    import pandas
+    
+    class ExcelIO(BaseIO):
+
+        def __init__(self, filePath=None, filePtr=None, isReadOnly=False, shouldAppend=False, shouldClose=True):
+            BaseIO.__init__(self, filePath=filePath, filePtr=filePtr, isReadOnly=isReadOnly, shouldAppend=shouldAppend, shouldClose=shouldClose)
+            if filePath is not None:
+                self._xlsWriter = pandas.ExcelWriter(filePath, engine='openpyxl', mode=('a' if shouldAppend else 'w'), if_sheet_exists=('new' if shouldAppend else None))
+            elif filePtr is not None:
+                self._xlsWriter = pandas.ExcelWriter(filePtr, engine='openpyxl', mode=('a' if shouldAppend else 'w'), if_sheet_exists=('new' if shouldAppend else None))
+            else:
+                raise RuntimeError('No file path or object provided to {:s} initialization method.'.format(self.__class__.__name__))
+
+        def __del__(self):
+            self._xlsWriter.save()
+    
+        def writeExamDataAndSummaries(self, examData):
+            # Create the Attributes sheet:
+            examDateStr = examData.examDate()
+            examDateStr = examDateStr.strftime('%Y-%m-%d') if examDateStr else ''
+            examStats = examData.statisticalSummary()
+            headerFrame = pandas.DataFrame({
+                        'Attribute': ['Exam Id', 'Course Name', 'Instructor', 'Exam Date', 'Mean Difficulty', 'Biserial Corr', 'Kuder-Richardson 20 Reliability', 'Mean Score', 'Score Variance', 'Score Std Deviation', 'Std Error of Measurement (KR-20)', 'Total Students', 'Total Questions'],
+                        'Value': [examData.examId() , examData.courseName(), examData.instructor(), examDateStr, examStats['mean-difficulty'], examStats['total-biserial-correlation'], examStats['kuder-richardson-20-reliability'], examStats['score-mean'], examStats['score-variance'], examStats['score-std-deviation'], examStats['std-error-of-measurement-kr-20'], examStats['total-students'], examStats['total-questions']]
+                    }
+                )
+            
+            # Create the distribution by passing sheet:
+            distByPassingFrame = pandas.DataFrame({
+                        'Low Pct': [d['range'][0] for d in examStats['distribution-by-passing']],
+                        'High Pct': [d['range'][1] for d in examStats['distribution-by-passing']],
+                        'Item Count':  [d['item-count'] for d in examStats['distribution-by-passing']]
+                    }
+                )
+            
+            # Create the distribution by biserial corr sheet:
+            distByBiserialCorrFrame = pandas.DataFrame({
+                        'Low Corr': [d['range'][0] for d in examStats['distribution-by-biserial-correlation']],
+                        'High Corr': [d['range'][1] for d in examStats['distribution-by-biserial-correlation']],
+                        'Item Count':  [d['item-count'] for d in examStats['distribution-by-biserial-correlation']]
+                    }
+                )
+            
+            # Create the breakdown by choice sheet:
+            symbols = sorted(examStats['breakdown-by-choice'].keys())
+            breakdownByChoiceFrame = pandas.DataFrame({
+                        'Symbol': symbols,
+                        'Pct Keyed': [examStats['breakdown-by-choice'][k]['pct-keyed'] for k in symbols],
+                        'Pct Chosen': [examStats['breakdown-by-choice'][k]['pct-chosen'] for k in symbols],
+                        'Avg Difficulty': [examStats['breakdown-by-choice'][k]['avg-difficulty'] for k in symbols],
+                    }
+                )
+                
+            # Create the Exam Data sheet:
+            examDataFrames = []
+            examDataFrameOffsets = [0]
+            questionDataFrames = []
+            questionDataFrameOffsets = [0]
+            for examSection in examData.examSections():
+                questionIds = ['Q' + str(i) for i in range(1, examSection.questionCount() + 1)]
+                statsSummary = examSection.statisticalSummary()
+                statsData = [[], [], []]
+                
+                # Handle the response summary frame:
+                rows = [ ['Group', 'Student'] + questionIds + ['Score'] ]
+                answerKey = examSection.answerKey()
+                row = ['Answer Key', '']
+                i = 0
+                while i < examSection.questionCount():
+                    row.append(answerKey[i])
+                    statsData[0].append(statsSummary[i]['biserial-correlation'])
+                    statsData[1].append(statsSummary[i]['pointwise-biserial-correlation'])
+                    statsData[2].append(statsSummary[i]['t-value'])
+                    i += 1
+                    
+                row.append(examSection.questionCount())
+                rows.append(row)
+                for answerGroup in examSection.studentAnswersGroups():
+                    groupId = answerGroup.groupId()
+                    answers = answerGroup.answers()
+                    scores = answerGroup.scores()
+                    a = 0
+                    while a < answerGroup.studentCount():
+                        row = [groupId, a + 1]
+                        for answer in answers[a]:
+                            row.append(answer)
+                        row.append(scores[a])
+                        rows.append(row)
+                        a += 1
+                # Append stats:
+                rows.append(['']*(3 + examSection.questionCount()))
+                rows.append(['Biserial Corr', ''] + statsData[0] + [''])
+                rows.append(['Pointwise Biserial Corr', ''] + statsData[1] + [''])
+                rows.append(['T Value', ''] + statsData[2] + [''])
+                
+                examDataFrames.append(pandas.DataFrame(data=rows))
+                examDataFrameOffsets.append(examDataFrameOffsets[-1] + len(rows) + 1)
+                
+                # Handle the question summary frame:
+                #for questionSummary in :
+                #    rows = [ [''] + questionIds + ['Total', 'Prop Chosen', 'Mean Score', 'Questionable'] ]
+            
+            # Per-question stats:
+            
+            
+            # Generate the Excel content from the data frames:
+            headerFrame.to_excel(self._xlsWriter, sheet_name='Attributes', index=False, freeze_panes=(1, 1))
+            i = 0
+            while i < len(examDataFrames):
+                examDataFrames[i].to_excel(self._xlsWriter, sheet_name='Exam Data', index=False, header=False, startrow=examDataFrameOffsets[i], freeze_panes=(1, 1))
+                i += 1
+            distByPassingFrame.to_excel(self._xlsWriter, sheet_name='Dist by Passing', index=False)
+            distByBiserialCorrFrame.to_excel(self._xlsWriter, sheet_name='Dist by Biserial Corr', index=False)
+            breakdownByChoiceFrame.to_excel(self._xlsWriter, sheet_name='Breakdown by Choice', index=False)
+                
+    outputFormatsRecognized['excel'] = lambda *args, **kwargs:ExcelIO(*args, **kwargs)
+
+except:
+    pass
+
+##
+####
+##
+
+class FortranIO(TextIO):
     
     # The answer key will be printed by breaking the list into groups of this many values:
     answerKeyStride = 5
@@ -1204,11 +1370,11 @@ class FortranIO(BaseIO):
         
         return (score, answers)
 
-    def readExamData(self, inputFPtr):
+    def readExamData(self):
         #
         # Read the file header, which supplies the instructor, course, etc.
         #
-        values = self.nextNonEmptyLineInFile(inputFPtr)
+        values = self.nextNonEmptyLineInFile(self.filePtr())
         
         #(I4,2A10,5X,3I2,1X,I4,2X,I3,3(4X,I1), I1,3X,I1 )
         examId = self.stringToIntWithDefault(values[0:4])
@@ -1279,7 +1445,7 @@ class FortranIO(BaseIO):
             n = nQuestions
             answerKey = []
             while n > 0:
-                values = [int(x) for x in self.nextNonEmptyLineInFile(inputFPtr).strip()]
+                values = [int(x) for x in self.nextNonEmptyLineInFile(self.filePtr()).strip()]
                 answerKey.extend(values)
                 n -= len(values)
             if n != 0:
@@ -1287,7 +1453,7 @@ class FortranIO(BaseIO):
             examSection.setAnswerKey(answerKey)
             
             # Read the response format string and convert to a list of formatting spec dicts:
-            formattingString = self.nextNonEmptyLineInFile(inputFPtr).strip()
+            formattingString = self.nextNonEmptyLineInFile(self.filePtr()).strip()
             examSection.setFortranFormatString(formattingString)
             formattingSpecs = []
             fieldIndex = 1
@@ -1309,7 +1475,7 @@ class FortranIO(BaseIO):
             answersGroup = StudentAnswers()
             answersGroup.setGroupId(groupId)
             while n > 0 and groupId < 6:
-                (score, answers) = self.parseStudentDataLine(formattingSpecs, self.nextNonEmptyLineInFile(inputFPtr), score, answers)
+                (score, answers) = self.parseStudentDataLine(formattingSpecs, self.nextNonEmptyLineInFile(self.filePtr()), score, answers)
                 if score == -1:
                     # New group:
                     if groupId >= 6:
@@ -1335,7 +1501,7 @@ class FortranIO(BaseIO):
             
             # Consume however many new-group lines remain:
             while groupId < 6:
-                (score, answers) = self.parseStudentDataLine(formattingSpecs, self.nextNonEmptyLineInFile(inputFPtr))
+                (score, answers) = self.parseStudentDataLine(formattingSpecs, self.nextNonEmptyLineInFile(self.filePtr()))
                 if score != -1:
                     raise ValueError('Unable to consume new-group token {:d} from input file'.format(groupId))
                 groupId += 1
@@ -1346,7 +1512,7 @@ class FortranIO(BaseIO):
             
             # Try to read another section from the file:
             try:
-                values = self.nextNonEmptyLineInFile(inputFPtr)
+                values = self.nextNonEmptyLineInFile(self.filePtr())
             except EOFError as E:
                 # End-of-file pretty clearly means there's no more sections to read...
                 break
@@ -1361,7 +1527,7 @@ class FortranIO(BaseIO):
             
         return newExam
         
-    def writeExamSection(self, outputFPtr, examData, examSection):
+    def writeExamSection(self, examData, examSection):
         #  210  FORMAT (' ',33X, 'ITEM ANALYSIS FOR DATA HAVING SPECIFIABLE RIGHT-
         #      1WRONG ANSWERS' ///// 33X, 'THE USER HAS SPECIFIED THE FOLLOWING IN
         #      2FORMATION ON CONTROL CARDS' //// 20X,'JOB NUMBER',I6 //20X,
@@ -1492,13 +1658,13 @@ class FortranIO(BaseIO):
                     # 1H ,///
                     outputText += ' \n\n\n\n'
         
-        outputFPtr.write(outputText*examSection.options()['number-of-copies'])
+        self.filePtr().write(outputText*examSection.options()['number-of-copies'])
     
-    def writeExamDataAndSummaries(self, outputFPtr, examData):
+    def writeExamDataAndSummaries(self, examData):
         self._runningQuestionNum = 0
         for examSection in examData.examSections():
             # Write header for the exam section:
-            self.writeExamSection(outputFPtr, examData, examSection)
+            self.writeExamSection(examData, examSection)
             
         statsData = exam.statisticalSummary()
         
@@ -1555,23 +1721,21 @@ class FortranIO(BaseIO):
         outputText += '          AVG. DIFF.= TOTAL OF ALL DIFFICULTY VALUES FOR ITEMS WITH A GIVEN KEY DIVIDED BY THE NUMBER OF SUCH ITEMS.\n'
 
         for copyNum in range(exam.options()['number-of-copies']):
-            outputFPtr.write(outputText)
+            self.filePtr().write(outputText)
 
 
 #
 # Configure the command line argument parser:
 #
 cliParser = argparse.ArgumentParser(description='Statistical analyses of multiple-choice responses.')
-cliParser.add_argument('--input', '-i',
+cliParser.add_argument('--input', '-i', metavar='<file|->',
         dest='inputFiles',
         action='append',
-        metavar='<file|->',
         help='an input file to be processed; may be used multiple times, "-" implies standard input and may be used only once (and is the default if no input files are provided)'
     )
-cliParser.add_argument('--output', '-o',
+cliParser.add_argument('--output', '-o', metavar='<file|->',
         dest='outputFiles',
         action='append',
-        metavar='<file|->',
         help='an output file to write data to; may be used multiple times, "-" implies standard output (and is the default if no input files are provided)  NOTE:  if the number of output files is fewer than the number of input files, the final output file will have multiple analyses written to it'
     )
 cliParser.add_argument('--append', '-a',
@@ -1580,16 +1744,16 @@ cliParser.add_argument('--append', '-a',
         default=False,
         help='always append to output files'
     )
-cliParser.add_argument('--format', '-f',
+cliParser.add_argument('--format', '-f', metavar='<format-id>',
         dest='fileFormat',
         default='fortran',
         help='file format to read and write (fortran is the default): ' + ', '.join(inputFormatsRecognized.keys())
     )
-cliParser.add_argument('--input-format', '-I',
+cliParser.add_argument('--input-format', '-I', metavar='<format-id>',
         dest='inputFileFormat',
         help='file format to read (fortran is the default): ' + ', '.join(inputFormatsRecognized.keys())
     )
-cliParser.add_argument('--output-format', '-O',
+cliParser.add_argument('--output-format', '-O', metavar='<format-id>',
         dest='outputFileFormat',
         help='file format to write (fortran is the default): ' + ', '.join(outputFormatsRecognized.keys())
     )
@@ -1629,25 +1793,25 @@ if cliArgs.outputFileFormat:
         sys.exit(errno.EINVAL)
 
 # Starting from empty input and output streams:
-inputFPtr = False
-outputFPtr = False
+inputIOObj = False
+outputIOObj = False
 
 # As long as we have input files to read, keep looping:
 while len(cliArgs.inputFiles) > 0:
     # Is there another input file in that list?
     if len(cliArgs.inputFiles) > 0:
-        # Close previous input file (so long as it wasn't stdin):
-        if inputFPtr and inputFile != '-':
-            inputFPtr.close()
+        # Close previous input file:
+        del(inputIOObj)
+        
         # Pull the next input file out of the list:
         inputFile = cliArgs.inputFiles.pop(0)
         
         # Attempt to open the input file:
         if inputFile == '-':
-            inputFPtr = sys.stdin
+            inputIOObj = inputFormatsRecognized[inputFileFormat](filePtr=sys.stdin, isReadOnly=True, shouldClose=False)
         else:
             try:
-                inputFPtr = open(inputFile, 'r')
+                inputIOObj = inputFormatsRecognized[inputFileFormat](filePath=inputFile, isReadOnly=True)
             except IOError as E:
                 if E.errno == errno.ENOENT:
                     sys.stderr.write('ERROR:  input file "{:s}" does not exist\n'.format(inputFile))
@@ -1660,34 +1824,35 @@ while len(cliArgs.inputFiles) > 0:
     # Is there another output file in that list?
     if len(cliArgs.outputFiles) > 0:
         # Close previous output file (so long as it wasn't stdout):
-        if outputFPtr and outputFile != '-':
-            outputFPtr.close()
+        del(outputIOObj)
+        
         # Pull the next output file out of the list:
         outputFile = cliArgs.outputFiles.pop(0)
         
         # Attempt to open the output file:
         if outputFile == '-':
-            outputFPtr = sys.stdout
+            outputIOObj = outputFormatsRecognized[outputFileFormat](filePtr=sys.stdout, shouldClose=False)
         else:
             try:
-                outputFPtr = open(outputFile, 'a' if cliArgs.should_append else 'w')
+                outputIOObj = outputFormatsRecognized[outputFileFormat](filePath=outputFile, shouldAppend=cliArgs.should_append)
             except Exception as E:
                 sys.stderr.write('ERROR:  failed to open output file "{:s}":  {:s}\n'.format(outputFile, str(E)))
                 sys.exit(errno.EIO)
     
     try:
-        inputHelper = inputFormatsRecognized[inputFileFormat]()
-        outputHelper = outputFormatsRecognized[outputFileFormat]()
-    
-        exam = inputHelper.readExamData(inputFPtr)
+        exam = inputIOObj.readExamData()
         exam.reverseAnswerOrderingIfNecessary()
         exam.calculateScoresFromAnswerKeys()
-    
+
         stats = StatData()
         stats.processExam(exam)
 
-        outputHelper.writeExamDataAndSummaries(outputFPtr, exam)
-                    
+        outputIOObj.writeExamDataAndSummaries(exam)                    
     except Exception as E:
         print('ERROR:  ' + str(E))
         sys.exit(1)
+
+if inputIOObj:
+    del(inputIOObj)
+if outputIOObj:
+    del(outputIOObj)
